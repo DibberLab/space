@@ -1,6 +1,6 @@
-# Siren Night Sky
+# Sedna
 
-An interactive sky for Siren, Wisconsin (45.79° N, 92.38° W). Pick any date and time to see the stars, constellations, planets, the Moon, deep-sky objects and live satellites. You can search for anything in the catalog, and the Tonight panel lists planet viewing times and space-station passes.
+An interactive night sky for wherever you are. It opens on your own location (if your browser shares it; otherwise Siren, Wisconsin), and you can type any city and state or GPS coordinates to see the sky from there. Pick any date and time to see the stars, constellations, planets, the Moon, deep-sky objects and live satellites. You can search for anything in the catalog, and the Tonight panel lists planet viewing times and space-station passes.
 
 Live at **https://space.dibberlab.me**.
 

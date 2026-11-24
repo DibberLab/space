@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Turn the single-file artifact version (siren-sky.html) into site/index.html for hosting.
+"""OUT OF DATE: site/index.html has since been renamed to Sedna and given a location picker.
+Running this would undo both. Kept for reference only.
+
+Turn the single-file artifact version (siren-sky.html) into site/index.html for hosting.
 
 Adds site metadata, the web-app manifest/icons, and loading fresh orbits from data/visual.tle.
 Usage: python3 scripts/build-from-artifact.py path/to/siren-sky.html
