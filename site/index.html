@@ -2,31 +2,37 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#060a14">
 <title>Siren Night Sky</title>
 <meta name="description" content="An interactive night sky for Siren, Wisconsin: stars, planets, the Moon, deep-sky objects and live satellites for any date and time.">
-<meta name="theme-color" content="#060a14">
 <meta property="og:title" content="Siren Night Sky">
 <meta property="og:description" content="Explore the sky over Siren, Wisconsin for any night, with live satellites.">
 <meta property="og:url" content="https://space.dibberlab.me/">
 <meta property="og:type" content="website">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Siren Sky">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 /* VOICE everyday, hushed: a night out on the dock in the northwoods
    IDEA a planisphere / observing chart you hold up to the real sky over the pines
-   PICTURE the live sky above a pine treeline, full-bleed canvas, planets and Moon gently exaggerated
+   PICTURE the live sky above a pine treeline, full-bleed canvas; on a phone it fills the whole screen
    COLOUR deep night blue-black ground, starlight ink, pale moon-blue accent, planets in their own tints
    TYPE Jost + Jost
-   LAYOUT laptop: sky fills left with time dock beneath, "tonight" panel right; phone: title, sky, time, toggles, tonight */
-:root{color-scheme:dark;--bg:#060a14;--panel:#0b1221;--line:#1c2741;--ink:#e8eef9;--mute:#9ba8c0;--acc:#b9d2ff;--acc2:#7f9bd6}
+   LAYOUT laptop: sky left with time + layers beneath, "tonight" panel right; phone: full-screen sky, search on top, floating buttons, bottom sheet with time and Tonight/Layers tabs */
+:root{color-scheme:dark;--bg:#060a14;--panel:#0b1221;--line:#1c2741;--ink:#e8eef9;--mute:#9ba8c0;--acc:#b9d2ff;--acc2:#7f9bd6;--sheet:0px;--top:0px}
 *{box-sizing:border-box;min-width:0}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 Jost,system-ui,sans-serif;overflow-x:clip}
-button,select,input{font:inherit;color:inherit}
-#app{display:grid;height:100%;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"top top" "stage side" "dock side"}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Jost,system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+button,select,input,textarea{font:inherit;color:inherit}
+#app{display:grid;height:100%;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:"top top" "stage side" "time side" "layers side"}
 .top{grid-area:top;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:12px max(16px,2vw);border-bottom:1px solid var(--line);background:var(--panel)}
 h1{font-size:30px;line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:500}
 h1 small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-weight:400;margin-top:3px}
@@ -36,40 +42,51 @@ h1 small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-we
 .views{display:flex;flex-wrap:wrap;gap:6px}
 .btn{min-height:40px;padding:6px 13px;border-radius:10px;border:1px solid var(--line);background:#111a2e;cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--acc2)}
-.btn:focus-visible,.chip:focus-within,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn:focus-visible,.chip:focus-within,input:focus-visible,select:focus-visible,.fab:focus-visible,.tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .btn.on{background:#22335a;border-color:var(--acc2)}
 #stage{grid-area:stage;position:relative;overflow:hidden;background:#02040a;touch-action:none}
 #stage canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;display:block}
 #stage canvas:active{cursor:grabbing}
 #hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 32px);text-align:center;background:rgba(6,10,20,.72);border:1px solid var(--line);padding:6px 14px;border-radius:20px;font-size:14px;color:var(--mute);pointer-events:none;transition:opacity .6s}
-#info{position:absolute;top:12px;left:12px;width:min(310px,calc(100% - 24px));background:rgba(9,14,27,.9);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;backdrop-filter:blur(6px)}
+#info{position:absolute;top:12px;left:12px;width:min(320px,calc(100% - 24px));background:rgba(9,14,27,.92);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:5}
 #info[hidden]{display:none}
-#info h3{margin:0;font-size:22px;font-weight:500;line-height:1.1;padding-right:30px}
+#info h3{margin:0;font-size:22px;font-weight:500;line-height:1.1;padding-right:34px}
 #info p{margin:3px 0 8px;color:var(--mute);font-size:14px}
 #info dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;margin:0;font-size:14px}
 #info dt{color:var(--mute)}
 #info dd{margin:0}
-#infoX{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:8px;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--mute)}
-.dock{grid-area:dock;padding:12px max(16px,2vw) 14px;border-top:1px solid var(--line);background:var(--panel);display:grid;gap:12px}
-.timerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#infoX{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:10px;border:0;background:transparent;font-size:24px;cursor:pointer;color:var(--mute)}
+#iGo{margin-top:10px;width:100%;white-space:normal}
+#iGo[hidden]{display:none}
+#fab{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:6}
+.fab{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(9,14,27,.86);display:grid;place-items:center;cursor:pointer;color:var(--ink);font-size:14px;font-weight:600;padding:0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.fab[hidden]{display:none}
+.fab.on{background:#22335a;border-color:var(--acc2)}
+.fab svg{width:22px;height:22px}
+.phone-only{display:none}
+.dock{display:contents}
+.handle,.tabs{display:none}
+.panes{display:contents}
+.timerow{grid-area:time;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px max(16px,2vw) 6px;background:var(--panel);border-top:1px solid var(--line)}
 #play{display:inline-flex;align-items:center;gap:6px;min-width:92px;justify-content:center}
 #date{min-height:40px;border-radius:10px;border:1px solid var(--line);background:#111a2e;padding:4px 10px;font-size:16px}
-#speed{min-height:40px;border-radius:10px;border:1px solid var(--line);background:#111a2e;padding:4px 8px;font-size:15px}
+#speed{min-height:40px;border-radius:10px;border:1px solid var(--line);background:#111a2e;padding:4px 8px;font-size:16px}
 .track{flex:1 1 280px;position:relative;padding-bottom:18px}
-#slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:7px;background:#0b1124;margin:12px 0 0;cursor:pointer}
-#slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--bg);border:3px solid #fff;box-shadow:0 0 0 3px rgba(185,210,255,.35)}
-#slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--bg);border:3px solid #fff}
+#slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:7px;background:#0b1124;margin:12px 0 0;cursor:pointer;touch-action:pan-y}
+#slider::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--bg);border:3px solid #fff;box-shadow:0 0 0 3px rgba(185,210,255,.35)}
+#slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--bg);border:3px solid #fff}
 .ticks{position:absolute;left:0;right:0;bottom:0;height:16px;font-size:13px;color:var(--mute)}
 .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
 #clock{font-size:20px;font-weight:500;min-width:84px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+#pLayers{grid-area:layers;padding:4px max(16px,2vw) 14px;background:var(--panel)}
 .toggles{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:4px 12px 4px 9px;border-radius:19px;border:1px solid var(--line);background:#0f1729;font-size:14px;cursor:pointer;user-select:none;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:4px 12px 4px 9px;border-radius:19px;border:1px solid var(--line);background:#0f1729;font-size:14px;cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap}
 .chip input{accent-color:var(--acc);width:16px;height:16px;margin:0}
 .chip:has(input:checked){background:#18264a;border-color:#2f4778}
 .ex{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--mute);margin-left:auto;white-space:nowrap}
 #ex{width:130px;accent-color:var(--acc)}
-.side{grid-area:side;border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:16px 18px 22px}
-.side h2{font-size:22px;font-weight:500;margin:0 0 2px;line-height:1.15}
+#pTonight{grid-area:side;border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:16px 18px 22px}
+#pTonight h2{font-size:22px;font-weight:500;margin:0 0 2px;line-height:1.15}
 #nightDate{color:var(--mute);font-size:14px;margin:0 0 12px}
 .facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:15px;margin:0 0 14px}
 .facts dt{color:var(--mute)}
@@ -78,8 +95,8 @@ h1 small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-we
 .moonline canvas{flex:none}
 .moonline div{font-size:14px;color:var(--mute)}
 .moonline b{display:block;color:var(--ink);font-weight:500;font-size:16px}
-h4{font-size:15px;font-weight:500;color:var(--mute);margin:0 0 6px}
-.pl{display:grid;grid-template-columns:14px minmax(0,1fr);gap:2px 10px;width:100%;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid transparent;background:none;cursor:pointer;align-items:start}
+h4{font-size:15px;font-weight:500;color:var(--mute);margin:16px 0 6px}
+.pl{display:grid;grid-template-columns:14px minmax(0,1fr);gap:2px 10px;width:100%;text-align:left;padding:10px;border-radius:10px;border:1px solid transparent;background:none;cursor:pointer;align-items:start}
 .pl:hover{background:#121c33;border-color:var(--line)}
 .pl i{width:12px;height:12px;border-radius:50%;margin-top:6px}
 .pl b{font-weight:500}
@@ -87,42 +104,89 @@ h4{font-size:15px;font-weight:500;color:var(--mute);margin:0 0 6px}
 .pl.off{opacity:.55}
 .note{font-size:13px;color:var(--mute);margin-top:16px;line-height:1.45}
 .search{position:relative;flex:1 1 250px;max-width:400px}
-#q{width:100%;min-height:42px;border-radius:21px;border:1px solid var(--line);background:#111a2e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ba8c0' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") no-repeat 14px 50%;padding:6px 16px 6px 38px;font-size:16px}
-#results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;margin:0;padding:6px;list-style:none;background:#0d1527;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 30px rgba(0,0,0,.5);max-height:min(60vh,460px);overflow:auto}
+#q{width:100%;min-height:44px;border-radius:22px;border:1px solid var(--line);background:#111a2e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ba8c0' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") no-repeat 14px 50%;padding:6px 16px 6px 38px;font-size:16px;-webkit-appearance:none;appearance:none}
+#results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;margin:0;padding:6px;list-style:none;background:#0d1527;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 30px rgba(0,0,0,.5);max-height:min(60vh,460px);overflow:auto;overscroll-behavior:contain}
 #results[hidden]{display:none}
-#results button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:9px;cursor:pointer}
+#results button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;width:100%;min-height:48px;text-align:left;background:none;border:0;padding:8px 10px;border-radius:9px;cursor:pointer}
 #results button.act,#results button:hover{background:#1a2747}
 #results b{font-weight:500}
 #results small{grid-column:1;color:var(--mute);font-size:13px}
 #results em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;font-size:13px;color:var(--mute);white-space:nowrap}
 #results em.up{color:#a7e3b8}
 #results .none{padding:10px;color:var(--mute);font-size:14px}
-#iGo{margin-top:10px;width:100%;white-space:normal}
-#iGo[hidden]{display:none}
-.side h4{margin-top:16px}
 .tle{margin-top:16px;font-size:14px;color:var(--mute)}
-.tle summary{cursor:pointer;min-height:32px}
+.tle summary{cursor:pointer;min-height:36px}
 .tle textarea{width:100%;min-height:90px;background:#0e1628;border:1px solid var(--line);border-radius:10px;color:var(--ink);font:13px/1.35 ui-monospace,monospace;padding:8px}
 .tle a{color:var(--acc)}
 #tleMsg{margin-left:8px}
+#redov{position:fixed;inset:0;z-index:200;pointer-events:none;background:#ff2010;mix-blend-mode:multiply;display:none}
+body.red #redov{display:block}
+#toast{position:fixed;left:50%;top:calc(var(--top) + 14px);transform:translateX(-50%);z-index:150;background:rgba(9,14,27,.95);border:1px solid var(--line);border-radius:14px;padding:10px 16px;font-size:14px;max-width:min(420px,calc(100% - 32px));text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast[hidden]{display:none}
 @media(max-width:900px){#app{grid-template-columns:minmax(0,1fr) 280px}}
-@media(max-width:760px){
-html,body{height:auto}
-#app{display:block}
-#stage{height:64svh;min-height:380px}
-.side{border-left:0;border-top:1px solid var(--line)}
-.ex{margin-left:0}
-h1{font-size:26px}
+
+/* ---------- phone ---------- */
+@media (max-width:760px),(max-height:520px) and (pointer:coarse){
+html,body{overflow:hidden;overscroll-behavior:none}
+#app{position:fixed;inset:0;display:block}
+#stage{position:absolute;inset:0}
+.top{position:absolute;top:0;left:0;right:0;z-index:20;display:block;border:0;background:linear-gradient(rgba(6,10,20,.96),rgba(6,10,20,.9) 72%,rgba(6,10,20,0));padding:calc(env(safe-area-inset-top) + 10px) max(12px,env(safe-area-inset-right)) 18px max(12px,env(safe-area-inset-left));pointer-events:none}
+.top>*{pointer-events:auto}
+h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.search{max-width:none}
+.views{display:none}
+#when{margin:6px 4px 0;font-size:14px;line-height:1.3;pointer-events:none}
+#when b{font-size:14px}
+#state{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fab{top:calc(var(--top) + 4px);right:max(10px,env(safe-area-inset-right))}
+.phone-only{display:grid}
+#hint{bottom:calc(var(--sheet) + 12px);font-size:13px;left:16px;right:16px;transform:none;margin:0 auto;width:fit-content}
+#info{top:auto;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));width:auto;bottom:calc(var(--sheet) + 10px);max-height:44svh;overflow-y:auto;overscroll-behavior:contain;padding:12px 14px}
+#info h3{font-size:20px}
+body.sheet-open #info,body.sheet-open #hint{display:none}
+.dock{display:flex;flex-direction:column;position:absolute;left:0;right:0;bottom:0;z-index:15;background:var(--panel);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:0 max(14px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 8px) max(14px,env(safe-area-inset-left));box-shadow:0 -12px 32px rgba(0,0,0,.45)}
+.handle{display:block;align-self:stretch;height:22px;border:0;background:none;cursor:pointer;position:relative;padding:0;touch-action:none}
+.handle::before{content:"";position:absolute;left:50%;top:8px;width:44px;height:5px;border-radius:3px;background:#2c3a5c;transform:translateX(-50%)}
+.timerow{display:grid;grid-template-columns:48px minmax(0,1fr) auto auto;grid-template-areas:"play track track clock" "date date speed now";gap:6px 10px;padding:0;background:none;border:0}
+#play{grid-area:play;min-width:0;width:48px;height:48px;border-radius:50%;padding:0}
+#playTxt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#play svg{width:16px;height:16px}
+.track{grid-area:track;padding-bottom:16px}
+#slider{height:18px;margin-top:10px}
+.ticks span:nth-child(odd){display:none}
+#clock{grid-area:clock;font-size:18px;min-width:0;align-self:center;margin-top:-10px}
+#date{grid-area:date;min-height:44px;font-size:16px;width:100%}
+#speed{grid-area:speed;min-height:44px}
+#now{grid-area:now;min-height:44px}
+.tabs{display:flex;gap:8px;margin-top:8px}
+.tab{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:#0f1729;cursor:pointer;font-size:15px}
+.tab[aria-selected=true]{background:#22335a;border-color:var(--acc2)}
+.panes{display:block;max-height:0;overflow:hidden}
+.dock[data-open] .panes{max-height:min(54svh,520px);overflow-y:auto;overscroll-behavior:contain;margin-top:10px}
+.pane{display:none}
+.dock[data-open=tonight] #pTonight,.dock[data-open=layers] #pLayers{display:block}
+#pTonight{border:0;padding:4px 2px 10px;overflow:visible}
+#pTonight h2{font-size:20px}
+#pLayers{padding:4px 0 10px;background:none}
+.chip{min-height:44px;font-size:15px}
+.ex{margin:10px 0 0;width:100%}
+#ex{flex:1;width:auto}
+}
+@media (max-height:520px) and (pointer:coarse){
+.timerow{grid-template-columns:48px minmax(0,1fr) auto auto auto auto;grid-template-areas:"play track clock date speed now"}
+#date{width:auto}
+#clock{margin-top:0}
+.dock[data-open] .panes{max-height:52svh}
 }
 @media(prefers-reduced-motion:reduce){#hint{transition:none}}
 </style>
 </head>
 <body>
 <div id="app">
-  <header class="top">
+  <header class="top" id="top">
     <h1>Siren night sky<small>45.79° N, 92.38° W · Burnett County, Wisconsin</small></h1>
     <div class="search">
-      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search stars, planets, galaxies, satellites" aria-label="Search the sky">
+      <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="Search stars, planets, galaxies, satellites" aria-label="Search the sky">
       <ul id="results" hidden></ul>
     </div>
     <div id="when"><b id="whenTxt">—</b><span id="state">—</span></div>
@@ -145,9 +209,16 @@ h1{font-size:26px}
       <button class="btn" id="iGo" hidden></button>
     </div>
     <div id="hint">Drag to look around · scroll or pinch to zoom · tap a star or planet</div>
+    <div id="fab">
+      <button class="fab phone-only" id="fCompass" aria-label="Turn to the next direction"><span id="fDir">S</span></button>
+      <button class="fab phone-only" id="fZen" aria-label="Look straight up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 18a9 9 0 0 1 18 0"/><path d="M2 18h20"/><circle cx="12" cy="11" r="1.4" fill="currentColor"/></svg></button>
+      <button class="fab" id="fSky" aria-label="Point your phone at the sky" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M12 7l-2.5 3h5z" fill="currentColor"/></svg></button>
+      <button class="fab" id="fRed" aria-label="Red night-vision light" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5a4a" stroke-width="1.8"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6" fill="#ff5a4a"/></svg></button>
+    </div>
   </div>
 
-  <section class="dock" aria-label="Time and display">
+  <section class="dock" id="dock" aria-label="Time and panels">
+    <button class="handle" id="handle" aria-label="Show or hide the panel"></button>
     <div class="timerow">
       <button class="btn" id="play"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path id="playIcon" d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg><span id="playTxt">Play</span></button>
       <input type="date" id="date" aria-label="Night of">
@@ -164,39 +235,48 @@ h1{font-size:26px}
       </select>
       <button class="btn" id="now" title="Jump to right now and run in real time">Live</button>
     </div>
-    <div class="toggles">
-      <label class="chip"><input type="checkbox" id="t-lines" checked>Constellation lines</label>
-      <label class="chip"><input type="checkbox" id="t-names" checked>Constellation names</label>
-      <label class="chip"><input type="checkbox" id="t-stars" checked>Star names</label>
-      <label class="chip"><input type="checkbox" id="t-planets" checked>Planet labels</label>
-      <label class="chip"><input type="checkbox" id="t-sats" checked>Satellites</label>
-      <label class="chip"><input type="checkbox" id="t-mw" checked>Milky Way</label>
-      <label class="chip"><input type="checkbox" id="t-dso">Deep-sky</label>
-      <label class="chip"><input type="checkbox" id="t-ecl">Ecliptic</label>
-      <label class="chip"><input type="checkbox" id="t-grid">Alt/az grid</label>
-      <label class="chip"><input type="checkbox" id="t-outer" checked>Uranus &amp; Neptune</label>
-      <label class="ex" for="ex">Exaggeration <input type="range" id="ex" min="0" max="100" value="35"></label>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="tonight" aria-selected="false">Tonight</button>
+      <button class="tab" role="tab" data-tab="layers" aria-selected="false">Layers</button>
+    </div>
+    <div class="panes">
+      <div class="pane" id="pLayers">
+        <div class="toggles">
+          <label class="chip"><input type="checkbox" id="t-lines" checked>Constellation lines</label>
+          <label class="chip"><input type="checkbox" id="t-names" checked>Constellation names</label>
+          <label class="chip"><input type="checkbox" id="t-stars" checked>Star names</label>
+          <label class="chip"><input type="checkbox" id="t-planets" checked>Planet labels</label>
+          <label class="chip"><input type="checkbox" id="t-sats" checked>Satellites</label>
+          <label class="chip"><input type="checkbox" id="t-mw" checked>Milky Way</label>
+          <label class="chip"><input type="checkbox" id="t-dso">Deep-sky</label>
+          <label class="chip"><input type="checkbox" id="t-ecl">Ecliptic</label>
+          <label class="chip"><input type="checkbox" id="t-grid">Alt/az grid</label>
+          <label class="chip"><input type="checkbox" id="t-outer" checked>Uranus &amp; Neptune</label>
+          <label class="ex" for="ex">Exaggeration <input type="range" id="ex" min="0" max="100" value="35"></label>
+        </div>
+      </div>
+      <aside class="pane" id="pTonight" aria-label="Tonight">
+        <h2>Tonight from Siren</h2>
+        <p id="nightDate"></p>
+        <dl class="facts" id="facts"></dl>
+        <div class="moonline"><canvas id="moonIcon" width="44" height="44"></canvas><div id="moonTxt"></div></div>
+        <h4>Planets · tap one to jump to its best moment</h4>
+        <div id="plist"></div>
+        <h4>Space station passes · tap to watch one in real time</h4>
+        <div id="passes"></div>
+        <details class="tle">
+          <summary>Satellite orbits: <span id="tleAge"></span></summary>
+          <p>Orbits refresh automatically on this site several times a day. If the date above looks old, you can paste fresh ones yourself: open <a href="https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&amp;FORMAT=tle" target="_blank" rel="noopener">CelesTrak’s brightest-satellites list</a>, select all, copy, and paste it here. Any CelesTrak list in TLE format works.</p>
+          <textarea id="tleIn" aria-label="Paste satellite orbits (TLE)"></textarea>
+          <button class="btn" id="tleGo">Use these orbits</button><span id="tleMsg"></span>
+        </details>
+        <p class="note">Positions are worked out in your browser from orbital elements and a bright-star catalog, accurate to a fraction of a degree. Satellites use the standard SGP4 model with orbits from CelesTrak. The Moon and planets are drawn larger and brighter than life; set Exaggeration to zero for something closer to true size. The faint speckle inside the Milky Way is texture, not catalogued stars. The treeline is made up to suggest the northwoods. It isn't a survey of any real shoreline.</p>
+      </aside>
     </div>
   </section>
-
-  <aside class="side" aria-label="Tonight">
-    <h2>Tonight from Siren</h2>
-    <p id="nightDate"></p>
-    <dl class="facts" id="facts"></dl>
-    <div class="moonline"><canvas id="moonIcon" width="44" height="44"></canvas><div id="moonTxt"></div></div>
-    <h4>Planets · tap one to jump to its best moment</h4>
-    <div id="plist"></div>
-    <h4>Space station passes · tap to watch one in real time</h4>
-    <div id="passes"></div>
-    <details class="tle">
-      <summary>Satellite orbits: <span id="tleAge"></span></summary>
-      <p>Orbits refresh automatically on this site several times a day. If the date above looks old, you can paste fresh ones yourself: open <a href="https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&amp;FORMAT=tle" target="_blank" rel="noopener">CelesTrak’s brightest-satellites list</a>, select all, copy, and paste it here. Any CelesTrak list in TLE format works.</p>
-      <textarea id="tleIn" aria-label="Paste satellite orbits (TLE)"></textarea>
-      <button class="btn" id="tleGo">Use these orbits</button><span id="tleMsg"></span>
-    </details>
-    <p class="note">Positions are worked out in your browser from orbital elements and a bright-star catalog, accurate to a fraction of a degree. Satellites use the standard SGP4 model with orbits from CelesTrak. The Moon and planets are drawn larger and brighter than life; set Exaggeration to zero for something closer to true size. The faint speckle inside the Milky Way is texture, not catalogued stars. The treeline is made up to suggest the northwoods. It isn't a survey of any real shoreline.</p>
-  </aside>
 </div>
+<div id="redov"></div>
+<div id="toast" role="status" hidden></div>
 
 <script>
 /*!
@@ -1601,8 +1681,9 @@ function mkProj(){
   const a=st.vaz*D2R,h=st.valt*D2R;
   const f=[Math.cos(h)*Math.sin(a),Math.cos(h)*Math.cos(a),Math.sin(h)], r=[Math.cos(a),-Math.sin(a),0];
   const u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];
-  const sc=st.dome?Math.min(W,H)*0.235:(W/2)/(2*Math.tan(st.fov*D2R/4));
-  const cx=W/2,cy=H/2;
+  const pt=st.padT||0,ah=Math.max(120,H-pt-(st.padB||0));
+  const sc=st.dome?Math.min(W,ah)*0.235:(W/2)/(2*Math.tan(st.fov*D2R/4));
+  const cx=W/2,cy=pt+ah/2;
   const raw=v=>{const Z=v[0]*f[0]+v[1]*f[1]+v[2]*f[2],k=2/(1+Z)*sc;return [cx+(v[0]*r[0]+v[1]*r[1])*k,cy-(v[0]*u[0]+v[1]*u[1]+v[2]*u[2])*k,k,Z];};
   return {sc,raw,P:v=>{const p=raw(v);return p[3]<-0.9?null:p;}};
 }
@@ -1854,7 +1935,7 @@ function aim(sel,az,alt){
 }
 function goWatch(g){
   st.t=g.t;if(g.real){st.speed=1;$('speed').value='1';if(!st.play)togglePlay();}
-  syncTime();st.sel=g.sel;infoKey=null;aim(g.sel,g.az,g.alt);
+  syncTime();st.sel=g.sel;infoKey=null;aim(g.sel,g.az,g.alt);closeSheetOnPhone();
 }
 $('iGo').addEventListener('click',()=>{if(goTarget)goWatch(goTarget);});
 
@@ -1863,22 +1944,23 @@ const ptrs=new Map();let pinch=null,moved=0,hintGone=false;
 function hideHint(){if(!hintGone){hintGone=true;$('hint').style.opacity=0;}}
 function setFov(f){st.fov=clamp(f,15,140);need=true;}
 function setDome(on){st.dome=on;if(on){st.vaz=180;st.valt=90;}markViews();need=true;}
-function markViews(){for(const id of ['vN','vE','vS','vW','vZ'])$(id).classList.remove('on');if(st.dome)$('vZ').classList.add('on');else{const m={0:'vN',90:'vE',180:'vS',270:'vW'};const a=Math.round(rev(st.vaz)/90)*90%360;if(Math.abs(((rev(st.vaz)-a+540)%360)-180)<12)$(m[a]).classList.add('on');}}
-cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;hideHint();
+function markViews(){const fd=$('fDir');if(fd)fd.textContent=st.dome?'Up':DIRS[Math.round(rev(st.vaz)/45)%8*2];for(const id of ['vN','vE','vS','vW','vZ'])$(id).classList.remove('on');if(st.dome)$('vZ').classList.add('on');else{const m={0:'vN',90:'vE',180:'vS',270:'vW'};const a=Math.round(rev(st.vaz)/90)*90%360;if(Math.abs(((rev(st.vaz)-a+540)%360)-180)<12)$(m[a]).classList.add('on');}}
+let ptrType='mouse';
+cv.addEventListener('pointerdown',e=>{ptrType=e.pointerType;cv.setPointerCapture(e.pointerId);$('q').blur();ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;hideHint();
   if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),fov:st.fov};}});
 cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId),dx=e.clientX-p[0],dy=e.clientY-p[1];ptrs.set(e.pointerId,[e.clientX,e.clientY]);
-  if(ptrs.size===2&&pinch){const [a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(st.dome&&d>pinch.d*1.15){st.dome=false;st.valt=65;pinch.fov=120;}if(!st.dome)setFov(pinch.fov*pinch.d/Math.max(d,1));moved=99;return;}
-  moved+=Math.abs(dx)+Math.abs(dy);if(moved<4)return;
+  if(ptrs.size===2&&pinch){const [a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);skyOff();if(st.dome&&d>pinch.d*1.15){st.dome=false;st.valt=65;pinch.fov=120;}if(!st.dome)setFov(pinch.fov*pinch.d/Math.max(d,1));moved=99;return;}
+  moved+=Math.abs(dx)+Math.abs(dy);if(moved<(ptrType==='touch'?8:4))return;skyOff();
   if(st.dome)st.vaz-=dx*0.35;else{const dpp=st.fov/W;st.vaz=rev(st.vaz-dx*dpp);st.valt=clamp(st.valt+dy*dpp,2,90);}
   markViews();need=true;});
 const endPtr=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;
-  if(moved<4&&e.type==='pointerup'){const r=cv.getBoundingClientRect();pick(e.clientX-r.left,e.clientY-r.top);}};
+  if(moved<(ptrType==='touch'?8:4)&&e.type==='pointerup'){const r=cv.getBoundingClientRect();pick(e.clientX-r.left,e.clientY-r.top);}};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('wheel',e=>{e.preventDefault();hideHint();if(st.dome){if(e.deltaY<0){st.dome=false;st.valt=65;st.fov=120;markViews();need=true;}return;}setFov(st.fov*Math.exp(e.deltaY*0.0012));},{passive:false});
-function pick(x,y){let best=null,bd=1e9;for(const h of hits){const d=Math.hypot(h.x-x,h.y-y);if(d<h.r){const sc=d+(h.m||0)*0.6;if(sc<bd){bd=sc;best=h;}}}
+function pick(x,y){let best=null,bd=1e9;const k=ptrType==='touch'?1.8:1;for(const h of hits){const d=Math.hypot(h.x-x,h.y-y);if(d<h.r*k){const sc=d+(h.m||0)*0.6;if(sc<bd){bd=sc;best=h;}}}
   st.sel=best?best.sel:null;infoKey=null;need=true;}
 $('infoX').addEventListener('click',()=>{st.sel=null;need=true;});
-for(const id of ['vN','vE','vS','vW'])$(id).addEventListener('click',e=>{st.dome=false;st.vaz=+e.currentTarget.dataset.az;st.valt=25;st.fov=W<H?80:100;markViews();need=true;});
+for(const id of ['vN','vE','vS','vW'])$(id).addEventListener('click',e=>{skyOff();st.dome=false;st.vaz=+e.currentTarget.dataset.az;st.valt=25;st.fov=W<H?80:100;markViews();need=true;});
 $('vZ').addEventListener('click',()=>setDome(true));
 window.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea'))return;if(e.key==='/'){e.preventDefault();$('q').focus();return;}const step=st.fov/18;
   if(e.key==='ArrowLeft'){st.vaz=rev(st.vaz-step);}else if(e.key==='ArrowRight'){st.vaz=rev(st.vaz+step);}else if(e.key==='ArrowUp'){st.valt=clamp(st.valt+step,2,90);}else if(e.key==='ArrowDown'){st.valt=clamp(st.valt-step,2,90);}
@@ -1896,7 +1978,7 @@ $('tleGo').addEventListener('click',()=>{const txt=$('tleIn').value,l=parseTLE(t
     const B=bodies(st.t),l=lstOf(st.t),mv=moonVec(B,l),sv=hv(B.sun.ra,B.sun.dec,l);
     ul.innerHTML=res.map((e,i)=>{let stt='';if(e.sel.kind!=='con'){const v=selVec(e.sel,B,l,mv,sv);if(v){const a=altOfV(v);stt=a>0?'<em class="up">Up now · '+dirOf(azOfV(v))+'</em>':'<em>Below horizon</em>';}}
       return '<li><button type="button" data-i="'+i+'"><b>'+esc(e.label)+'</b><small>'+esc(e.sub)+'</small>'+stt+'</button></li>';}).join('');ul.hidden=false;paint();};
-  const choose=e=>{if(!e)return;st.sel=e.sel;infoKey=null;aim(e.sel);ul.hidden=true;q.value='';q.blur();hideHint();};
+  const choose=e=>{if(!e)return;skyOff();closeSheetOnPhone();st.sel=e.sel;infoKey=null;aim(e.sel);ul.hidden=true;q.value='';q.blur();hideHint();};
   q.addEventListener('input',render);q.addEventListener('focus',render);
   q.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){act=Math.min(act+1,res.length-1);paint();e.preventDefault();}else if(e.key==='ArrowUp'){act=Math.max(act-1,0);paint();e.preventDefault();}else if(e.key==='Enter'){choose(res[act]);e.preventDefault();}else if(e.key==='Escape'){ul.hidden=true;q.blur();}});
   ul.addEventListener('pointerdown',e=>e.preventDefault());
@@ -1906,16 +1988,88 @@ $('tleGo').addEventListener('click',()=>{const txt=$('tleIn').value,l=parseTLE(t
 $('speed').addEventListener('change',e=>{st.speed=+e.target.value;});
 function togglePlay(){st.play=!st.play;$('playTxt').textContent=st.play?'Pause':'Play';$('playIcon').setAttribute('d',st.play?'M3 1.5h3v11H3zM8 1.5h3v11H8z':'M3 1.5v11l9-5.5z');}
 $('play').addEventListener('click',togglePlay);
-$('ex').addEventListener('input',e=>{st.ex=e.target.value/100;need=true;});
-for(const k of Object.keys(st.tog)){const el=$('t-'+k);if(!el)continue;el.checked=st.tog[k];el.addEventListener('change',()=>{st.tog[k]=el.checked;need=true;});}
+$('ex').addEventListener('input',e=>{st.ex=e.target.value/100;need=true;savePrefs();});
+for(const k of Object.keys(st.tog)){const el=$('t-'+k);if(!el)continue;el.checked=st.tog[k];el.addEventListener('change',()=>{st.tog[k]=el.checked;need=true;savePrefs();});}
 $('plist').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const n=b.dataset.p,en=st.ni.pl.find(q=>q.n===n);
   if(en.ok){st.t=en.best;syncTime();st.dome=false;st.vaz=en.az;st.valt=clamp(en.alt,10,70);st.fov=W<H?70:85;}
-  st.sel={kind:'planet',id:n};infoKey=null;markViews();need=true;});
+  st.sel={kind:'planet',id:n};infoKey=null;markViews();need=true;closeSheetOnPhone();});
+// ---------- phone layout, sheet, floating buttons, sky mode, red light, prefs ----------
+const MQ=matchMedia('(max-width:760px),(max-height:520px) and (pointer:coarse)');
+const isPhone=()=>MQ.matches;
+const dock=$('dock'),topEl=$('top'),root=document.documentElement;
+function measure(){
+  const ph=isPhone();
+  st.padT=ph?topEl.offsetHeight-14:0;
+  if(!ph)st.padB=0;else if(!dock.dataset.open)st.padB=dock.offsetHeight;
+  root.style.setProperty('--top',(ph?topEl.offsetHeight:0)+'px');
+  root.style.setProperty('--sheet',(ph?dock.offsetHeight:0)+'px');
+  $('q').placeholder=ph?'Search the sky':'Search stars, planets, galaxies, satellites';
+  $('hint').textContent=ph?'Drag to look around · pinch to zoom · tap anything':'Drag to look around · scroll or pinch to zoom · tap a star or planet';
+  need=true;
+}
+function setSheet(p){
+  if(p)dock.dataset.open=p;else delete dock.dataset.open;
+  document.body.classList.toggle('sheet-open',!!p);
+  for(const b of document.querySelectorAll('.tab'))b.setAttribute('aria-selected',String(b.dataset.tab===p));
+  measure();
+}
+const closeSheetOnPhone=()=>{if(isPhone())setSheet(null);};
+for(const b of document.querySelectorAll('.tab'))b.addEventListener('click',()=>setSheet(dock.dataset.open===b.dataset.tab?null:b.dataset.tab));
+{let y0=null;const h=$('handle');
+  h.addEventListener('pointerdown',e=>{y0=e.clientY;h.setPointerCapture(e.pointerId);});
+  h.addEventListener('pointerup',e=>{if(y0==null)return;const dy=e.clientY-y0;y0=null;
+    if(dy<-25)setSheet(dock.dataset.open||'tonight');else if(dy>25)setSheet(null);else setSheet(dock.dataset.open?null:'tonight');});}
+const roUI=new ResizeObserver(measure);roUI.observe(dock);roUI.observe(topEl);
+(MQ.addEventListener?MQ.addEventListener('change',measure):MQ.addListener(measure));
+
+let toastT=0;
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},3800);}
+
+// prefs
+const PREF='siren-prefs';
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({tog:st.tog,ex:st.ex,red:document.body.classList.contains('red')}));}catch(e){}}
+try{const p=JSON.parse(localStorage.getItem(PREF)||'null');if(p){Object.assign(st.tog,p.tog||{});if(typeof p.ex==='number')st.ex=p.ex;if(p.red)document.body.classList.add('red');}}catch(e){}
+$('ex').value=Math.round(st.ex*100);
+$('fRed').setAttribute('aria-pressed',String(document.body.classList.contains('red')));
+$('fRed').classList.toggle('on',document.body.classList.contains('red'));
+$('fRed').addEventListener('click',()=>{const on=document.body.classList.toggle('red');$('fRed').setAttribute('aria-pressed',String(on));$('fRed').classList.toggle('on',on);savePrefs();if(on)toast('Red light on: easier on your night vision');});
+
+// compass + overhead
+$('fCompass').addEventListener('click',()=>{skyOff();const cur=st.dome?150:rev(st.vaz);const next=[0,90,180,270].find(a=>a>cur+10)??0;st.dome=false;st.vaz=next;st.valt=25;st.fov=Math.max(st.fov,70);markViews();need=true;});
+$('fZen').addEventListener('click',()=>{skyOff();if(st.dome){st.dome=false;st.vaz=180;st.valt=30;markViews();need=true;}else setDome(true);});
+
+// sky mode: aim the view with the phone's motion sensors
+let sky=null;
+function skyOff(){if(!sky)return;window.removeEventListener(sky.ev,sky.h);try{sky.lock&&sky.lock.release();}catch(e){}sky=null;$('fSky').classList.remove('on');$('fSky').setAttribute('aria-pressed','false');}
+async function skyOn(){
+  const DOE=window.DeviceOrientationEvent;
+  if(DOE&&typeof DOE.requestPermission==='function'){try{if(await DOE.requestPermission()!=='granted'){toast('Motion access was turned down. You can allow it in your browser’s settings.');return;}}catch(e){toast('This browser won’t share motion on this page.');return;}}
+  const ev='ondeviceorientationabsolute' in window?'deviceorientationabsolute':'deviceorientation';
+  let got=false,sm=null;
+  const h=e=>{
+    let a=e.alpha;const b=e.beta,g=e.gamma;
+    if(typeof e.webkitCompassHeading==='number'&&!isNaN(e.webkitCompassHeading))a=360-e.webkitCompassHeading;
+    if(a==null||b==null||g==null)return;got=true;
+    const A=a*D2R,B=b*D2R,G=g*D2R;
+    const c=[-Math.cos(A)*Math.sin(G)-Math.sin(A)*Math.sin(B)*Math.cos(G),-Math.sin(A)*Math.sin(G)+Math.cos(A)*Math.sin(B)*Math.cos(G),-Math.cos(B)*Math.cos(G)];
+    sm=sm?sm.map((v,i)=>v+(c[i]-v)*0.22):c;
+    const L=Math.hypot(sm[0],sm[1],sm[2])||1;
+    st.dome=false;st.vaz=rev(Math.atan2(sm[0],sm[1])*R2D);st.valt=clamp(Math.asin(sm[2]/L)*R2D,2,90);markViews();need=true;
+  };
+  window.addEventListener(ev,h);
+  sky={ev,h,lock:null};$('fSky').classList.add('on');$('fSky').setAttribute('aria-pressed','true');hideHint();closeSheetOnPhone();
+  toast('Hold your phone up to the sky. Drag to stop.');
+  try{if(navigator.wakeLock)sky.lock=await navigator.wakeLock.request('screen');}catch(e){}
+  setTimeout(()=>{if(sky&&!got){skyOff();toast('Your browser didn’t share the phone’s direction here.');}},2500);
+}
+if('DeviceOrientationEvent' in window&&matchMedia('(pointer:coarse)').matches)$('fSky').hidden=false;
+$('fSky').addEventListener('click',()=>{sky?skyOff():skyOn();});
+
 {const ticks=[['3 PM',180],['6 PM',360],['9 PM',540],['12 AM',720],['3 AM',900],['6 AM',1080],['9 AM',1260]];$('ticks').innerHTML=ticks.map(t=>'<span style="left:'+(t[1]/1440*100)+'%">'+t[0]+'</span>').join('');}
 
 const stage=$('stage');
 const ro=new ResizeObserver(()=>{const r=stage.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);
-  if(firstSize&&W){firstSize=false;if(W<H){st.fov=80;st.valt=32;}}need=true;});
+  if(firstSize&&W){firstSize=false;if(W<H){st.fov=75;st.valt=35;}}need=true;});
 ro.observe(stage);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{need=true;});
 let last=0;
