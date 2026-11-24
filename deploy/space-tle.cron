@@ -1,0 +1,4 @@
+# /etc/cron.d/space-tle: refresh satellite orbits for space.dibberlab.me every 8 hours.
+# Writes outside the git checkout so deploys (git pull) never conflict with it.
+# nginx serves /var/lib/space/data/visual.tle, falling back to the repo's copy.
+17 */8 * * * www-data /usr/local/bin/space-update-tle /var/lib/space/data/visual.tle >/dev/null 2>&1

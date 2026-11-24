@@ -22,6 +22,9 @@ echo ">>> $before -> $after"
 if ! git diff --quiet "$before" "$after" -- deploy/space.nginx.conf; then
     echo "!!! deploy/space.nginx.conf changed. Install it by hand (nginx -t first)."
 fi
+if ! git diff --quiet "$before" "$after" -- scripts/update-tle.sh deploy/space-tle.cron; then
+    echo "!!! orbit refresh changed. Re-run step 6b of deploy/setup-from-mac.sh."
+fi
 
 # Check nginx serves the page locally, bypassing Cloudflare.
 code=$(curl -sk -o /dev/null -w '%{http_code}' \

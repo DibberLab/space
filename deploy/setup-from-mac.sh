@@ -51,6 +51,13 @@ d "cd /etc/nginx && git add sites-available/space sites-enabled/space &&
 echo "== 6. install the deploy script outside the repo"
 d 'install -m 755 /var/www/space/deploy/space-deploy.sh /usr/local/bin/space-deploy && /usr/local/bin/space-deploy'
 
+echo "== 6b. satellite-orbit refresh (cron, every 8 hours)"
+d 'set -e
+   install -d -o www-data -g www-data -m 755 /var/lib/space /var/lib/space/data
+   install -m 755 /var/www/space/scripts/update-tle.sh /usr/local/bin/space-update-tle
+   install -m 644 /var/www/space/deploy/space-tle.cron /etc/cron.d/space-tle
+   sudo -u www-data /usr/local/bin/space-update-tle /var/lib/space/data/visual.tle || echo "CelesTrak fetch failed; the repo copy is served until the cron succeeds"'
+
 echo "== 7. GitHub deploy key, locked to that script"
 [ -f "$KEY" ] || ssh-keygen -t ed25519 -N "" -C "github-actions-space-deploy" -f "$KEY"
 PUB=$(cat "$KEY.pub")

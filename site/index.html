@@ -1,16 +1,1937 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Space</title>
+<title>Siren Night Sky</title>
+<meta name="description" content="An interactive night sky for Siren, Wisconsin: stars, planets, the Moon, deep-sky objects and live satellites for any date and time.">
+<meta name="theme-color" content="#060a14">
+<meta property="og:title" content="Siren Night Sky">
+<meta property="og:description" content="Explore the sky over Siren, Wisconsin for any night, with live satellites.">
+<meta property="og:url" content="https://space.dibberlab.me/">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; }
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-         background: #05060f; color: #e6e8f2; font: 16px/1.5 system-ui, sans-serif; }
+/* VOICE everyday, hushed: a night out on the dock in the northwoods
+   IDEA a planisphere / observing chart you hold up to the real sky over the pines
+   PICTURE the live sky above a pine treeline, full-bleed canvas, planets and Moon gently exaggerated
+   COLOUR deep night blue-black ground, starlight ink, pale moon-blue accent, planets in their own tints
+   TYPE Jost + Jost
+   LAYOUT laptop: sky fills left with time dock beneath, "tonight" panel right; phone: title, sky, time, toggles, tonight */
+:root{color-scheme:dark;--bg:#060a14;--panel:#0b1221;--line:#1c2741;--ink:#e8eef9;--mute:#9ba8c0;--acc:#b9d2ff;--acc2:#7f9bd6}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Jost,system-ui,sans-serif;overflow-x:clip}
+button,select,input{font:inherit;color:inherit}
+#app{display:grid;height:100%;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"top top" "stage side" "dock side"}
+.top{grid-area:top;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:12px max(16px,2vw);border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font-size:30px;line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:500}
+h1 small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-weight:400;margin-top:3px}
+#when{flex:1 1 260px;font-size:16px}
+#when b{font-weight:500}
+#state{color:var(--mute);display:block;font-size:14px}
+.views{display:flex;flex-wrap:wrap;gap:6px}
+.btn{min-height:40px;padding:6px 13px;border-radius:10px;border:1px solid var(--line);background:#111a2e;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--acc2)}
+.btn:focus-visible,.chip:focus-within,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn.on{background:#22335a;border-color:var(--acc2)}
+#stage{grid-area:stage;position:relative;overflow:hidden;background:#02040a;touch-action:none}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;display:block}
+#stage canvas:active{cursor:grabbing}
+#hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 32px);text-align:center;background:rgba(6,10,20,.72);border:1px solid var(--line);padding:6px 14px;border-radius:20px;font-size:14px;color:var(--mute);pointer-events:none;transition:opacity .6s}
+#info{position:absolute;top:12px;left:12px;width:min(310px,calc(100% - 24px));background:rgba(9,14,27,.9);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;backdrop-filter:blur(6px)}
+#info[hidden]{display:none}
+#info h3{margin:0;font-size:22px;font-weight:500;line-height:1.1;padding-right:30px}
+#info p{margin:3px 0 8px;color:var(--mute);font-size:14px}
+#info dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;margin:0;font-size:14px}
+#info dt{color:var(--mute)}
+#info dd{margin:0}
+#infoX{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:8px;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--mute)}
+.dock{grid-area:dock;padding:12px max(16px,2vw) 14px;border-top:1px solid var(--line);background:var(--panel);display:grid;gap:12px}
+.timerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#play{display:inline-flex;align-items:center;gap:6px;min-width:92px;justify-content:center}
+#date{min-height:40px;border-radius:10px;border:1px solid var(--line);background:#111a2e;padding:4px 10px;font-size:16px}
+#speed{min-height:40px;border-radius:10px;border:1px solid var(--line);background:#111a2e;padding:4px 8px;font-size:15px}
+.track{flex:1 1 280px;position:relative;padding-bottom:18px}
+#slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:7px;background:#0b1124;margin:12px 0 0;cursor:pointer}
+#slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--bg);border:3px solid #fff;box-shadow:0 0 0 3px rgba(185,210,255,.35)}
+#slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--bg);border:3px solid #fff}
+.ticks{position:absolute;left:0;right:0;bottom:0;height:16px;font-size:13px;color:var(--mute)}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+#clock{font-size:20px;font-weight:500;min-width:84px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.toggles{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:4px 12px 4px 9px;border-radius:19px;border:1px solid var(--line);background:#0f1729;font-size:14px;cursor:pointer;user-select:none;white-space:nowrap}
+.chip input{accent-color:var(--acc);width:16px;height:16px;margin:0}
+.chip:has(input:checked){background:#18264a;border-color:#2f4778}
+.ex{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--mute);margin-left:auto;white-space:nowrap}
+#ex{width:130px;accent-color:var(--acc)}
+.side{grid-area:side;border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:16px 18px 22px}
+.side h2{font-size:22px;font-weight:500;margin:0 0 2px;line-height:1.15}
+#nightDate{color:var(--mute);font-size:14px;margin:0 0 12px}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:15px;margin:0 0 14px}
+.facts dt{color:var(--mute)}
+.facts dd{margin:0;font-variant-numeric:tabular-nums}
+.moonline{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:16px;background:#0e1628}
+.moonline canvas{flex:none}
+.moonline div{font-size:14px;color:var(--mute)}
+.moonline b{display:block;color:var(--ink);font-weight:500;font-size:16px}
+h4{font-size:15px;font-weight:500;color:var(--mute);margin:0 0 6px}
+.pl{display:grid;grid-template-columns:14px minmax(0,1fr);gap:2px 10px;width:100%;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid transparent;background:none;cursor:pointer;align-items:start}
+.pl:hover{background:#121c33;border-color:var(--line)}
+.pl i{width:12px;height:12px;border-radius:50%;margin-top:6px}
+.pl b{font-weight:500}
+.pl span{grid-column:2;font-size:14px;color:var(--mute)}
+.pl.off{opacity:.55}
+.note{font-size:13px;color:var(--mute);margin-top:16px;line-height:1.45}
+.search{position:relative;flex:1 1 250px;max-width:400px}
+#q{width:100%;min-height:42px;border-radius:21px;border:1px solid var(--line);background:#111a2e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ba8c0' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") no-repeat 14px 50%;padding:6px 16px 6px 38px;font-size:16px}
+#results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;margin:0;padding:6px;list-style:none;background:#0d1527;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 30px rgba(0,0,0,.5);max-height:min(60vh,460px);overflow:auto}
+#results[hidden]{display:none}
+#results button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:9px;cursor:pointer}
+#results button.act,#results button:hover{background:#1a2747}
+#results b{font-weight:500}
+#results small{grid-column:1;color:var(--mute);font-size:13px}
+#results em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;font-size:13px;color:var(--mute);white-space:nowrap}
+#results em.up{color:#a7e3b8}
+#results .none{padding:10px;color:var(--mute);font-size:14px}
+#iGo{margin-top:10px;width:100%;white-space:normal}
+#iGo[hidden]{display:none}
+.side h4{margin-top:16px}
+.tle{margin-top:16px;font-size:14px;color:var(--mute)}
+.tle summary{cursor:pointer;min-height:32px}
+.tle textarea{width:100%;min-height:90px;background:#0e1628;border:1px solid var(--line);border-radius:10px;color:var(--ink);font:13px/1.35 ui-monospace,monospace;padding:8px}
+.tle a{color:var(--acc)}
+#tleMsg{margin-left:8px}
+@media(max-width:900px){#app{grid-template-columns:minmax(0,1fr) 280px}}
+@media(max-width:760px){
+html,body{height:auto}
+#app{display:block}
+#stage{height:64svh;min-height:380px}
+.side{border-left:0;border-top:1px solid var(--line)}
+.ex{margin-left:0}
+h1{font-size:26px}
+}
+@media(prefers-reduced-motion:reduce){#hint{transition:none}}
 </style>
 </head>
 <body>
-  <p>space.dibberlab.me &mdash; coming soon.</p>
+<div id="app">
+  <header class="top">
+    <h1>Siren night sky<small>45.79° N, 92.38° W · Burnett County, Wisconsin</small></h1>
+    <div class="search">
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search stars, planets, galaxies, satellites" aria-label="Search the sky">
+      <ul id="results" hidden></ul>
+    </div>
+    <div id="when"><b id="whenTxt">—</b><span id="state">—</span></div>
+    <div class="views" role="group" aria-label="Look toward">
+      <button class="btn" data-az="0" id="vN">North</button>
+      <button class="btn" data-az="90" id="vE">East</button>
+      <button class="btn" data-az="180" id="vS">South</button>
+      <button class="btn" data-az="270" id="vW">West</button>
+      <button class="btn" id="vZ">Overhead</button>
+    </div>
+  </header>
+
+  <div id="stage">
+    <canvas id="sky" aria-label="Simulated sky over Siren, Wisconsin"></canvas>
+    <div id="info" hidden>
+      <button id="infoX" aria-label="Close">×</button>
+      <h3 id="iName"></h3>
+      <p id="iSub"></p>
+      <dl id="iRows"></dl>
+      <button class="btn" id="iGo" hidden></button>
+    </div>
+    <div id="hint">Drag to look around · scroll or pinch to zoom · tap a star or planet</div>
+  </div>
+
+  <section class="dock" aria-label="Time and display">
+    <div class="timerow">
+      <button class="btn" id="play"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path id="playIcon" d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg><span id="playTxt">Play</span></button>
+      <input type="date" id="date" aria-label="Night of">
+      <div class="track">
+        <input type="range" id="slider" min="0" max="1440" step="1" aria-label="Time of night">
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <span id="clock">—</span>
+      <select id="speed" aria-label="Playback speed">
+        <option value="1">Real time</option>
+        <option value="60">1 min/s</option>
+        <option value="600" selected>10 min/s</option>
+        <option value="3600">1 hr/s</option>
+      </select>
+      <button class="btn" id="now" title="Jump to right now and run in real time">Live</button>
+    </div>
+    <div class="toggles">
+      <label class="chip"><input type="checkbox" id="t-lines" checked>Constellation lines</label>
+      <label class="chip"><input type="checkbox" id="t-names" checked>Constellation names</label>
+      <label class="chip"><input type="checkbox" id="t-stars" checked>Star names</label>
+      <label class="chip"><input type="checkbox" id="t-planets" checked>Planet labels</label>
+      <label class="chip"><input type="checkbox" id="t-sats" checked>Satellites</label>
+      <label class="chip"><input type="checkbox" id="t-mw" checked>Milky Way</label>
+      <label class="chip"><input type="checkbox" id="t-dso">Deep-sky</label>
+      <label class="chip"><input type="checkbox" id="t-ecl">Ecliptic</label>
+      <label class="chip"><input type="checkbox" id="t-grid">Alt/az grid</label>
+      <label class="chip"><input type="checkbox" id="t-outer" checked>Uranus &amp; Neptune</label>
+      <label class="ex" for="ex">Exaggeration <input type="range" id="ex" min="0" max="100" value="35"></label>
+    </div>
+  </section>
+
+  <aside class="side" aria-label="Tonight">
+    <h2>Tonight from Siren</h2>
+    <p id="nightDate"></p>
+    <dl class="facts" id="facts"></dl>
+    <div class="moonline"><canvas id="moonIcon" width="44" height="44"></canvas><div id="moonTxt"></div></div>
+    <h4>Planets · tap one to jump to its best moment</h4>
+    <div id="plist"></div>
+    <h4>Space station passes · tap to watch one in real time</h4>
+    <div id="passes"></div>
+    <details class="tle">
+      <summary>Satellite orbits: <span id="tleAge"></span></summary>
+      <p>Orbits refresh automatically on this site several times a day. If the date above looks old, you can paste fresh ones yourself: open <a href="https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&amp;FORMAT=tle" target="_blank" rel="noopener">CelesTrak’s brightest-satellites list</a>, select all, copy, and paste it here. Any CelesTrak list in TLE format works.</p>
+      <textarea id="tleIn" aria-label="Paste satellite orbits (TLE)"></textarea>
+      <button class="btn" id="tleGo">Use these orbits</button><span id="tleMsg"></span>
+    </details>
+    <p class="note">Positions are worked out in your browser from orbital elements and a bright-star catalog, accurate to a fraction of a degree. Satellites use the standard SGP4 model with orbits from CelesTrak. The Moon and planets are drawn larger and brighter than life; set Exaggeration to zero for something closer to true size. The faint speckle inside the Milky Way is texture, not catalogued stars. The treeline is made up to suggest the northwoods. It isn't a survey of any real shoreline.</p>
+  </aside>
+</div>
+
+<script>
+/*!
+ * satellite-js v5.0.0
+ * (c) 2013 Shashwat Kandadai and UCSC
+ * https://github.com/shashwatak/satellite-js
+ * License: MIT
+ */
+
+!function(o,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(o="undefined"!=typeof globalThis?globalThis:o||self).satellite=t()}(this,(function(){"use strict";var o=Math.PI,t=2*o,e=o/180,s=180/o,a=1440,n=398600.8,d=6378.135,r=60/Math.sqrt(650942.9922085947),i=d*r/60,c=1/r,h=.001082616,m=-253881e-11,l=-165597e-11,p=m/h,x=2/3;function g(o,t){for(var e=[31,o%4==0?29:28,31,30,31,30,31,31,30,31,30,31],s=Math.floor(t),a=1,n=0;s>n+e[a-1]&&a<12;)n+=e[a-1],a+=1;var d=a,r=s-n,i=24*(t-s),c=Math.floor(i);i=60*(i-c);var h=Math.floor(i);return{mon:d,day:r,hr:c,minute:h,sec:60*(i-h)}}function M(o,t,e,s,a,n){var d=arguments.length>6&&void 0!==arguments[6]?arguments[6]:0;return 367*o-Math.floor(7*(o+Math.floor((t+9)/12))*.25)+Math.floor(275*t/9)+e+1721013.5+((d/6e4+n/60+a)/60+s)/24}function f(o,t,e,s,a,n,d){if(o instanceof Date){var r=o;return M(r.getUTCFullYear(),r.getUTCMonth()+1,r.getUTCDate(),r.getUTCHours(),r.getUTCMinutes(),r.getUTCSeconds(),r.getUTCMilliseconds())}return M(o,t,e,s,a,n,d)}function u(e,s){var a,n,d,r,i,c,h,m,l,p,x,g,M,f,u,z,v,y,b=e.e3,q=e.ee2,w=e.peo,T=e.pgho,j=e.pho,E=e.pinco,F=e.plo,A=e.se2,C=e.se3,L=e.sgh2,S=e.sgh3,U=e.sgh4,D=e.sh2,I=e.sh3,R=e.si2,_=e.si3,k=e.sl2,O=e.sl3,P=e.sl4,Z=e.t,G=e.xgh2,H=e.xgh3,Y=e.xgh4,$=e.xh2,B=e.xh3,J=e.xi2,K=e.xi3,N=e.xl2,Q=e.xl3,V=e.xl4,W=e.zmol,X=e.zmos,oo=s.init,to=s.opsmode,eo=s.ep,so=s.inclp,ao=s.nodep,no=s.argpp,ro=s.mp;y=X+119459e-10*Z,"y"===oo&&(y=X),v=y+.0335*Math.sin(y);var io=A*(h=.5*(f=Math.sin(v))*f-.25)+C*(m=-.5*f*Math.cos(v)),co=R*h+_*m,ho=k*h+O*m+P*f,mo=L*h+S*m+U*f,lo=D*h+I*m;return y=W+.00015835218*Z,"y"===oo&&(y=W),v=y+.1098*Math.sin(y),l=io+(q*(h=.5*(f=Math.sin(v))*f-.25)+b*(m=-.5*f*Math.cos(v))),g=co+(J*h+K*m),M=ho+(N*h+Q*m+V*f),p=mo+(G*h+H*m+Y*f),x=lo+($*h+B*m),"n"===oo&&(M-=F,p-=T,x-=j,so+=g-=E,eo+=l-=w,r=Math.sin(so),d=Math.cos(so),so>=.2?(no+=p-=d*(x/=r),ao+=x,ro+=M):(a=r*(c=Math.sin(ao)),n=r*(i=Math.cos(ao)),a+=x*i+g*d*c,n+=-x*c+g*d*i,(ao%=t)<0&&"a"===to&&(ao+=t),u=ro+no+d*ao,u+=M+p-g*ao*r,z=ao,(ao=Math.atan2(a,n))<0&&"a"===to&&(ao+=t),Math.abs(z-ao)>o&&(ao<z?ao+=t:ao-=t),no=u-(ro+=M)-d*ao)),{ep:eo,inclp:so,nodep:ao,argpp:no,mp:ro}}function z(o){var s=(o-2451545)/36525,a=-62e-7*s*s*s+.093104*s*s+3164400184.812866*s+67310.54841;return(a=a*e/240%t)<0&&(a+=t),a}function v(){return(arguments.length<=0?void 0:arguments[0])instanceof Date||arguments.length>1?z(f.apply(void 0,arguments)):z.apply(void 0,arguments)}function y(e,s){var a,n,c,m,l,g,M,f,z,v,y,b,q,w,T,j,E,F,A,C,L,S,U,D,I,R;e.t=s,e.error=0;var _=e.mo+e.mdot*e.t,k=e.argpo+e.argpdot*e.t,O=e.nodeo+e.nodedot*e.t;f=k,C=_;var P=e.t*e.t;if(S=O+e.nodecf*P,j=1-e.cc1*e.t,E=e.bstar*e.cc4*e.t,F=e.t2cof*P,1!==e.isimp){g=e.omgcof*e.t;var Z=1+e.eta*Math.cos(_);C=_+(T=g+e.xmcof*(Z*Z*Z-e.delmo)),f=k-T,b=(y=P*e.t)*e.t,j=j-e.d2*P-e.d3*y-e.d4*b,E+=e.bstar*e.cc5*(Math.sin(C)-e.sinmao),F=F+e.t3cof*y+b*(e.t4cof+e.t*e.t5cof)}L=e.no;var G=e.ecco;if(A=e.inclo,"d"===e.method){q=e.t;var H=function(o){var e,s,a,n,d,r,i,c,h=o.irez,m=o.d2201,l=o.d2211,p=o.d3210,x=o.d3222,g=o.d4410,M=o.d4422,f=o.d5220,u=o.d5232,z=o.d5421,v=o.d5433,y=o.dedt,b=o.del1,q=o.del2,w=o.del3,T=o.didt,j=o.dmdt,E=o.dnodt,F=o.domdt,A=o.argpo,C=o.argpdot,L=o.t,S=o.tc,U=o.gsto,D=o.xfact,I=o.xlamo,R=o.no,_=o.atime,k=o.em,O=o.argpm,P=o.inclm,Z=o.xli,G=o.mm,H=o.xni,Y=o.nodem,$=o.nm,B=.13130908,J=2.8843198,K=.37448087,N=5.7686396,Q=.95240898,V=1.8014998,W=1.050833,X=4.4108898,oo=259200,to=0,eo=0,so=(U+.0043752690880113*S)%t;if(k+=y*L,P+=T*L,O+=F*L,Y+=E*L,G+=j*L,0!==h){(0===_||L*_<=0||Math.abs(L)<Math.abs(_))&&(_=0,H=R,Z=I),e=L>0?720:-720;for(var ao=381;381===ao;)2!==h?(i=b*Math.sin(Z-B)+q*Math.sin(2*(Z-J))+w*Math.sin(3*(Z-K)),d=H+D,r=b*Math.cos(Z-B)+2*q*Math.cos(2*(Z-J))+3*w*Math.cos(3*(Z-K)),r*=d):(a=(c=A+C*_)+c,s=Z+Z,i=m*Math.sin(a+Z-N)+l*Math.sin(Z-N)+p*Math.sin(c+Z-Q)+x*Math.sin(-c+Z-Q)+g*Math.sin(a+s-V)+M*Math.sin(s-V)+f*Math.sin(c+Z-W)+u*Math.sin(-c+Z-W)+z*Math.sin(c+s-X)+v*Math.sin(-c+s-X),d=H+D,r=m*Math.cos(a+Z-N)+l*Math.cos(Z-N)+p*Math.cos(c+Z-Q)+x*Math.cos(-c+Z-Q)+f*Math.cos(c+Z-W)+u*Math.cos(-c+Z-W)+2*(g*Math.cos(a+s-V)+M*Math.cos(s-V)+z*Math.cos(c+s-X)+v*Math.cos(-c+s-X)),r*=d),Math.abs(L-_)>=720?ao=381:(eo=L-_,ao=0),381===ao&&(Z+=d*e+i*oo,H+=i*e+r*oo,_+=e);$=H+i*eo+r*eo*eo*.5,n=Z+d*eo+i*eo*eo*.5,1!==h?(G=n-2*Y+2*so,to=$-R):(G=n-Y-O+so,to=$-R),$=R+to}return{atime:_,em:k,argpm:O,inclm:P,xli:Z,mm:G,xni:H,nodem:Y,dndt:to,nm:$}}({irez:e.irez,d2201:e.d2201,d2211:e.d2211,d3210:e.d3210,d3222:e.d3222,d4410:e.d4410,d4422:e.d4422,d5220:e.d5220,d5232:e.d5232,d5421:e.d5421,d5433:e.d5433,dedt:e.dedt,del1:e.del1,del2:e.del2,del3:e.del3,didt:e.didt,dmdt:e.dmdt,dnodt:e.dnodt,domdt:e.domdt,argpo:e.argpo,argpdot:e.argpdot,t:e.t,tc:q,gsto:e.gsto,xfact:e.xfact,xlamo:e.xlamo,no:e.no,atime:e.atime,em:G,argpm:f,inclm:A,xli:e.xli,mm:C,xni:e.xni,nodem:S,nm:L});G=H.em,f=H.argpm,A=H.inclm,C=H.mm,S=H.nodem,L=H.nm}if(L<=0)return e.error=2,[!1,!1];var Y=Math.pow(r/L,x)*j*j;if(L=r/Math.pow(Y,1.5),(G-=E)>=1||G<-.001)return e.error=1,[!1,!1];G<1e-6&&(G=1e-6),D=(C+=e.no*F)+f+S;var $=G;if(U=A,z=f%=t,R=S%=t,I=C=((D%=t)-f-S)%t,m=Math.sin(A),c=Math.cos(A),"d"===e.method){var B=u(e,{inclo:e.inclo,init:"n",ep:$,inclp:U,nodep:R,argpp:z,mp:I,opsmode:e.operationmode});if($=B.ep,R=B.nodep,z=B.argpp,I=B.mp,(U=B.inclp)<0&&(U=-U,R+=o,z-=o),$<0||$>1)return e.error=3,[!1,!1]}"d"===e.method&&(m=Math.sin(U),c=Math.cos(U),e.aycof=-.5*p*m,Math.abs(c+1)>15e-13?e.xlcof=-.25*p*m*(3+5*c)/(1+c):e.xlcof=-.25*p*m*(3+5*c)/15e-13);var J=$*Math.cos(z);T=1/(Y*(1-$*$));var K=$*Math.sin(z)+T*e.aycof,N=(I+z+R+T*e.xlcof*J-R)%t;M=N,w=9999.9;for(var Q=1;Math.abs(w)>=1e-12&&Q<=10;)n=Math.sin(M),w=(N-K*(a=Math.cos(M))+J*n-M)/(w=1-a*J-n*K),Math.abs(w)>=.95&&(w=w>0?.95:-.95),M+=w,Q+=1;var V=J*a+K*n,W=J*n-K*a,X=J*J+K*K,oo=Y*(1-X);if(oo<0)return e.error=4,[!1,!1];var to=Y*(1-V),eo=Math.sqrt(Y)*W/to,so=Math.sqrt(oo)/to,ao=Math.sqrt(1-X),no=Y/to*(n-K-J*(T=W/(1+ao))),ro=Y/to*(a-J+K*T);v=Math.atan2(no,ro);var io=(ro+ro)*no,co=1-2*no*no,ho=.5*h*(T=1/oo),mo=ho*T;"d"===e.method&&(l=c*c,e.con41=3*l-1,e.x1mth2=1-l,e.x7thm1=7*l-1);var lo=to*(1-1.5*mo*ao*e.con41)+.5*ho*e.x1mth2*co;if(lo<1)return e.error=6,{position:!1,velocity:!1};v-=.25*mo*e.x7thm1*io;var po=R+1.5*mo*c*io,xo=U+1.5*mo*c*m*co,go=eo-L*ho*e.x1mth2*io/r,Mo=so+L*ho*(e.x1mth2*co+1.5*e.con41)/r,fo=Math.sin(v),uo=Math.cos(v),zo=Math.sin(po),vo=Math.cos(po),yo=Math.sin(xo),bo=Math.cos(xo),qo=-zo*bo,wo=vo*bo,To=qo*fo+vo*uo,jo=wo*fo+zo*uo,Eo=yo*fo;return{position:{x:lo*To*d,y:lo*jo*d,z:lo*Eo*d},velocity:{x:(go*To+Mo*(qo*uo-vo*fo))*i,y:(go*jo+Mo*(wo*uo-zo*fo))*i,z:(go*Eo+Mo*(yo*uo))*i}}}function b(e,s){var a,n,i,m,g,M,f,z,b,q,w,T,j,E,F,A,C,L,S,U,D,I,R,_,k,O,P,Z,G,H,Y,$,B,J,K,N,Q,V,W,X,oo,to,eo,so,ao,no,ro,io,co,ho,mo,lo,po=s.opsmode,xo=s.satn,go=s.epoch,Mo=s.xbstar,fo=s.xecco,uo=s.xargpo,zo=s.xinclo,vo=s.xmo,yo=s.xno,bo=s.xnodeo;e.isimp=0,e.method="n",e.aycof=0,e.con41=0,e.cc1=0,e.cc4=0,e.cc5=0,e.d2=0,e.d3=0,e.d4=0,e.delmo=0,e.eta=0,e.argpdot=0,e.omgcof=0,e.sinmao=0,e.t=0,e.t2cof=0,e.t3cof=0,e.t4cof=0,e.t5cof=0,e.x1mth2=0,e.x7thm1=0,e.mdot=0,e.nodedot=0,e.xlcof=0,e.xmcof=0,e.nodecf=0,e.irez=0,e.d2201=0,e.d2211=0,e.d3210=0,e.d3222=0,e.d4410=0,e.d4422=0,e.d5220=0,e.d5232=0,e.d5421=0,e.d5433=0,e.dedt=0,e.del1=0,e.del2=0,e.del3=0,e.didt=0,e.dmdt=0,e.dnodt=0,e.domdt=0,e.e3=0,e.ee2=0,e.peo=0,e.pgho=0,e.pho=0,e.pinco=0,e.plo=0,e.se2=0,e.se3=0,e.sgh2=0,e.sgh3=0,e.sgh4=0,e.sh2=0,e.sh3=0,e.si2=0,e.si3=0,e.sl2=0,e.sl3=0,e.sl4=0,e.gsto=0,e.xfact=0,e.xgh2=0,e.xgh3=0,e.xgh4=0,e.xh2=0,e.xh3=0,e.xi2=0,e.xi3=0,e.xl2=0,e.xl3=0,e.xl4=0,e.xlamo=0,e.zmol=0,e.zmos=0,e.atime=0,e.xli=0,e.xni=0,e.bstar=Mo,e.ecco=fo,e.argpo=uo,e.inclo=zo,e.mo=vo,e.no=yo,e.nodeo=bo,e.operationmode=po;e.init="y",e.t=0;var qo=function(o){var e=o.ecco,s=o.epoch,a=o.inclo,n=o.opsmode,d=o.no,i=e*e,c=1-i,m=Math.sqrt(c),l=Math.cos(a),p=l*l,g=Math.pow(r/d,x),M=.75*h*(3*p-1)/(m*c),f=M/(g*g),u=g*(1-f*f-f*(1/3+134*f*f/81));d/=1+(f=M/(u*u));var z,y=Math.pow(r/d,x),b=Math.sin(a),q=y*c,w=1-5*p,T=-w-p-p,j=1/y,E=q*q,F=y*(1-e);if("a"===n){var A=s-7305,C=Math.floor(A+1e-8),L=.017202791694070362;(z=(1.7321343856509375+L*C+(L+t)*(A-C)+A*A*5075514194322695e-30)%t)<0&&(z+=t)}else z=v(s+2433281.5);return{no:d,method:"n",ainv:j,ao:y,con41:T,con42:w,cosio:l,cosio2:p,eccsq:i,omeosq:c,posq:E,rp:F,rteosq:m,sinio:b,gsto:z}}({satn:xo,ecco:e.ecco,epoch:go,inclo:e.inclo,no:e.no,method:e.method,opsmode:e.operationmode}),wo=qo.ao,To=qo.con42,jo=qo.cosio,Eo=qo.cosio2,Fo=qo.eccsq,Ao=qo.omeosq,Co=qo.posq,Lo=qo.rp,So=qo.rteosq,Uo=qo.sinio;if(e.no=qo.no,e.con41=qo.con41,e.gsto=qo.gsto,e.a=Math.pow(e.no*c,-2/3),e.alta=e.a*(1+e.ecco)-1,e.altp=e.a*(1-e.ecco)-1,e.error=0,Ao>=0||e.no>=0){if(e.isimp=0,Lo<1.034492841559484&&(e.isimp=1),_=1.0122292801892716,L=1.880279159015271e-9,(F=(Lo-1)*d)<156){_=F-78,F<98&&(_=20);var Do=(120-_)/d;L=Do*Do*Do*Do,_=_/d+1}A=1/Co,to=1/(wo-_),e.eta=wo*e.ecco*to,T=e.eta*e.eta,w=e.ecco*e.eta,C=Math.abs(1-T),m=(f=(M=L*Math.pow(to,4))/Math.pow(C,3.5))*e.no*(wo*(1+1.5*T+w*(4+T))+.375*h*to/C*e.con41*(8+3*T*(8+T))),e.cc1=e.bstar*m,g=0,e.ecco>1e-4&&(g=-2*M*to*p*e.no*Uo/e.ecco),e.x1mth2=1-Eo,e.cc4=2*e.no*f*wo*Ao*(e.eta*(2+.5*T)+e.ecco*(.5+2*T)-h*to/(wo*C)*(-3*e.con41*(1-2*w+T*(1.5-.5*w))+.75*e.x1mth2*(2*T-w*(1+T))*Math.cos(2*e.argpo))),e.cc5=2*f*wo*Ao*(1+2.75*(T+w)+w*T),z=Eo*Eo,X=.5*(W=1.5*h*A*e.no)*h*A,oo=-.46875*l*A*A*e.no,e.mdot=e.no+.5*W*So*e.con41+.0625*X*So*(13-78*Eo+137*z),e.argpdot=-.5*W*To+.0625*X*(7-114*Eo+395*z)+oo*(3-36*Eo+49*z),so=-W*jo,e.nodedot=so+(.5*X*(4-19*Eo)+2*oo*(3-7*Eo))*jo,eo=e.argpdot+e.nodedot,e.omgcof=e.bstar*g*Math.cos(e.argpo),e.xmcof=0,e.ecco>1e-4&&(e.xmcof=-x*M*e.bstar/w),e.nodecf=3.5*Ao*so*e.cc1,e.t2cof=1.5*e.cc1,Math.abs(jo+1)>15e-13?e.xlcof=-.25*p*Uo*(3+5*jo)/(1+jo):e.xlcof=-.25*p*Uo*(3+5*jo)/15e-13,e.aycof=-.5*p*Uo;var Io=1+e.eta*Math.cos(e.mo);if(e.delmo=Io*Io*Io,e.sinmao=Math.sin(e.mo),e.x7thm1=7*Eo-1,2*o/e.no>=225){e.method="d",e.isimp=1,0,j=e.inclo;var Ro=function(o){var e,s,a,n,d,r,i,c,h,m,l,p,x,g,M,f,u,z,v,y,b,q,w,T,j,E,F,A,C,L,S,U,D,I,R,_,k,O,P,Z,G,H,Y,$,B,J,K,N,Q,V,W,X,oo,to,eo,so,ao,no,ro,io,co,ho,mo,lo=o.epoch,po=o.ep,xo=o.argpp,go=o.tc,Mo=o.inclp,fo=o.nodep,uo=.01675,zo=.0549,vo=o.np,yo=po,bo=Math.sin(fo),qo=Math.cos(fo),wo=Math.sin(xo),To=Math.cos(xo),jo=Math.sin(Mo),Eo=Math.cos(Mo),Fo=yo*yo,Ao=1-Fo,Co=Math.sqrt(Ao),Lo=lo+18261.5+go/1440,So=(4.523602-.00092422029*Lo)%t,Uo=Math.sin(So),Do=Math.cos(So),Io=.91375164-.03568096*Do,Ro=Math.sqrt(1-Io*Io),_o=.089683511*Uo/Ro,ko=Math.sqrt(1-_o*_o),Oo=5.8351514+.001944368*Lo,Po=.39785416*Uo/Ro,Zo=ko*Do+.91744867*_o*Uo;Po=Math.atan2(Po,Zo),Po+=Oo-So;var Go=Math.cos(Po),Ho=Math.sin(Po);y=.1945905,b=-.98088458,T=.91744867,j=.39785416,q=qo,w=bo,l=29864797e-13;for(var Yo=1/vo,$o=0;$o<2;)eo=-6*(e=y*q+b*T*w)*(d=-jo*(i=-y*w+b*T*q)+Eo*(c=b*j))+Fo*(-24*(p=e*To+(s=Eo*i+jo*c)*wo)*(z=d*To)-6*(g=-e*wo+s*To)*(f=d*wo)),so=-6*(e*(r=-jo*(h=b*w+y*T*q)+Eo*(m=y*j))+(a=-b*q+y*T*w)*d)+Fo*(-24*((x=a*To+(n=Eo*h+jo*m)*wo)*z+p*(v=r*To))+-6*(g*(u=r*wo)+(M=-a*wo+n*To)*f)),ao=-6*a*r+Fo*(-24*x*v-6*M*u),no=6*s*d+Fo*(24*p*f-6*g*z),ro=6*(n*d+s*r)+Fo*(24*(x*f+p*u)-6*(M*z+g*v)),io=6*n*r+Fo*(24*x*u-6*M*v),X=(X=3*(e*e+s*s)+(co=12*p*p-3*g*g)*Fo)+X+Ao*co,oo=(oo=6*(e*a+s*n)+(ho=24*p*x-6*g*M)*Fo)+oo+Ao*ho,to=(to=3*(a*a+n*n)+(mo=12*x*x-3*M*M)*Fo)+to+Ao*mo,J=-.5*(K=l*Yo)/Co,B=-15*yo*(N=K*Co),Q=p*g+x*M,V=x*g+p*M,W=x*M-p*g,1===($o+=1)&&(E=B,F=J,A=K,C=N,L=Q,S=V,U=W,D=X,I=oo,R=to,_=eo,k=so,O=ao,P=no,Z=ro,G=io,H=co,Y=ho,$=mo,y=Go,b=Ho,T=Io,j=Ro,q=ko*qo+_o*bo,w=bo*ko-qo*_o,l=4.7968065e-7);return{snodm:bo,cnodm:qo,sinim:jo,cosim:Eo,sinomm:wo,cosomm:To,day:Lo,e3:2*B*W,ee2:2*B*V,em:yo,emsq:Fo,gam:Oo,peo:0,pgho:0,pho:0,pinco:0,plo:0,rtemsq:Co,se2:2*E*S,se3:2*E*U,sgh2:2*C*Y,sgh3:2*C*($-H),sgh4:-18*C*uo,sh2:-2*F*Z,sh3:-2*F*(G-P),si2:2*F*k,si3:2*F*(O-_),sl2:-2*A*I,sl3:-2*A*(R-D),sl4:-2*A*(-21-9*Fo)*uo,s1:B,s2:J,s3:K,s4:N,s5:Q,s6:V,s7:W,ss1:E,ss2:F,ss3:A,ss4:C,ss5:L,ss6:S,ss7:U,sz1:D,sz2:I,sz3:R,sz11:_,sz12:k,sz13:O,sz21:P,sz22:Z,sz23:G,sz31:H,sz32:Y,sz33:$,xgh2:2*N*ho,xgh3:2*N*(mo-co),xgh4:-18*N*zo,xh2:-2*J*ro,xh3:-2*J*(io-no),xi2:2*J*so,xi3:2*J*(ao-eo),xl2:-2*K*oo,xl3:-2*K*(to-X),xl4:-2*K*(-21-9*Fo)*zo,nm:vo,z1:X,z2:oo,z3:to,z11:eo,z12:so,z13:ao,z21:no,z22:ro,z23:io,z31:co,z32:ho,z33:mo,zmol:(.2299715*Lo-Oo+4.7199672)%t,zmos:(6.2565837+.017201977*Lo)%t}}({epoch:go,ep:e.ecco,argpp:e.argpo,tc:0,inclp:e.inclo,nodep:e.nodeo,np:e.no,e3:e.e3,ee2:e.ee2,peo:e.peo,pgho:e.pgho,pho:e.pho,pinco:e.pinco,plo:e.plo,se2:e.se2,se3:e.se3,sgh2:e.sgh2,sgh3:e.sgh3,sgh4:e.sgh4,sh2:e.sh2,sh3:e.sh3,si2:e.si2,si3:e.si3,sl2:e.sl2,sl3:e.sl3,sl4:e.sl4,xgh2:e.xgh2,xgh3:e.xgh3,xgh4:e.xgh4,xh2:e.xh2,xh3:e.xh3,xi2:e.xi2,xi3:e.xi3,xl2:e.xl2,xl3:e.xl3,xl4:e.xl4,zmol:e.zmol,zmos:e.zmos});e.e3=Ro.e3,e.ee2=Ro.ee2,e.peo=Ro.peo,e.pgho=Ro.pgho,e.pho=Ro.pho,e.pinco=Ro.pinco,e.plo=Ro.plo,e.se2=Ro.se2,e.se3=Ro.se3,e.sgh2=Ro.sgh2,e.sgh3=Ro.sgh3,e.sgh4=Ro.sgh4,e.sh2=Ro.sh2,e.sh3=Ro.sh3,e.si2=Ro.si2,e.si3=Ro.si3,e.sl2=Ro.sl2,e.sl3=Ro.sl3,e.sl4=Ro.sl4,n=Ro.sinim,a=Ro.cosim,b=Ro.em,q=Ro.emsq,S=Ro.s1,U=Ro.s2,D=Ro.s3,I=Ro.s4,R=Ro.s5,k=Ro.ss1,O=Ro.ss2,P=Ro.ss3,Z=Ro.ss4,G=Ro.ss5,H=Ro.sz1,Y=Ro.sz3,$=Ro.sz11,B=Ro.sz13,J=Ro.sz21,K=Ro.sz23,N=Ro.sz31,Q=Ro.sz33,e.xgh2=Ro.xgh2,e.xgh3=Ro.xgh3,e.xgh4=Ro.xgh4,e.xh2=Ro.xh2,e.xh3=Ro.xh3,e.xi2=Ro.xi2,e.xi3=Ro.xi3,e.xl2=Ro.xl2,e.xl3=Ro.xl3,e.xl4=Ro.xl4,e.zmol=Ro.zmol,e.zmos=Ro.zmos,E=Ro.nm,ao=Ro.z1,no=Ro.z3,ro=Ro.z11,io=Ro.z13,co=Ro.z21,ho=Ro.z23,mo=Ro.z31,lo=Ro.z33;var _o=u(e,{inclo:j,init:e.init,ep:e.ecco,inclp:e.inclo,nodep:e.nodeo,argpp:e.argpo,mp:e.mo,opsmode:e.operationmode});e.ecco=_o.ep,e.inclo=_o.inclp,e.nodeo=_o.nodep,e.argpo=_o.argpp,e.mo=_o.mp,0,0,0;var ko=function(e){var s,a,n,d,i,c,h,m,l,p,g,M,f,u,z,v,y,b=e.cosim,q=e.argpo,w=e.s1,T=e.s2,j=e.s3,E=e.s4,F=e.s5,A=e.sinim,C=e.ss1,L=e.ss2,S=e.ss3,U=e.ss4,D=e.ss5,I=e.sz1,R=e.sz3,_=e.sz11,k=e.sz13,O=e.sz21,P=e.sz23,Z=e.sz31,G=e.sz33,H=e.t,Y=e.tc,$=e.gsto,B=e.mo,J=e.mdot,K=e.no,N=e.nodeo,Q=e.nodedot,V=e.xpidot,W=e.z1,X=e.z3,oo=e.z11,to=e.z13,eo=e.z21,so=e.z23,ao=e.z31,no=e.z33,ro=e.ecco,io=e.eccsq,co=e.emsq,ho=e.em,mo=e.argpm,lo=e.inclm,po=e.mm,xo=e.nm,go=e.nodem,Mo=e.irez,fo=e.atime,uo=e.d2201,zo=e.d2211,vo=e.d3210,yo=e.d3222,bo=e.d4410,qo=e.d4422,wo=e.d5220,To=e.d5232,jo=e.d5421,Eo=e.d5433,Fo=e.dedt,Ao=e.didt,Co=e.dmdt,Lo=e.dnodt,So=e.domdt,Uo=e.del1,Do=e.del2,Io=e.del3,Ro=e.xfact,_o=e.xlamo,ko=e.xli,Oo=e.xni,Po=.0043752690880113,Zo=.00015835218,Go=119459e-10;Mo=0,xo<.0052359877&&xo>.0034906585&&(Mo=1),xo>=.00826&&xo<=.00924&&ho>=.5&&(Mo=2);var Ho=-Go*L*(O+P);(lo<.052359877||lo>o-.052359877)&&(Ho=0),0!==A&&(Ho/=A);var Yo=-Zo*T*(eo+so);(lo<.052359877||lo>o-.052359877)&&(Yo=0),So=U*Go*(Z+G-6)-b*Ho+E*Zo*(ao+no-6),Lo=Ho,0!==A&&(So-=b/A*Yo,Lo+=Yo/A);var $o=($+Y*Po)%t;if(ho+=(Fo=C*Go*D+w*Zo*F)*H,lo+=(Ao=L*Go*(_+k)+T*Zo*(oo+to))*H,mo+=So*H,go+=Lo*H,po+=(Co=-Go*S*(I+R-14-6*co)-Zo*j*(W+X-14-6*co))*H,0!==Mo){if(z=Math.pow(xo/r,x),2===Mo){var Bo=ho,Jo=co;y=(ho=ro)*(co=io),ho<=.65?(n=3.616-13.247*ho+16.29*co,d=117.39*ho-19.302-228.419*co+156.591*y,i=109.7927*ho-18.9068-214.6334*co+146.5816*y,c=242.694*ho-41.122-471.094*co+313.953*y,h=841.88*ho-146.407-1629.014*co+1083.435*y,m=3017.977*ho-532.114-5740.032*co+3708.276*y):(n=331.819*ho-72.099-508.738*co+266.724*y,d=1582.851*ho-346.844-2415.925*co+1246.113*y,i=1554.908*ho-342.585-2366.899*co+1215.972*y,c=4758.686*ho-1052.797-7193.992*co+3651.957*y,h=16178.11*ho-3581.69-24462.77*co+12422.52*y,m=ho>.715?29936.92*ho-5149.66-54087.36*co+31324.56*y:1464.74-4664.75*ho+3763.64*co),ho<.7?(g=4988.61*ho-919.2277-9064.77*co+5542.21*y,l=4568.6173*ho-822.71072-8491.4146*co+5337.524*y,p=4690.25*ho-853.666-8624.77*co+5341.4*y):(g=161616.52*ho-37995.78-229838.2*co+109377.94*y,l=218913.95*ho-51752.104-309468.16*co+146349.42*y,p=170470.89*ho-40023.88-242699.48*co+115605.82*y),uo=(f=17891679e-13*(u=xo*xo*3*(z*z)))*(s=.75*(1+2*b+(v=b*b)))*(-.306-.44*(ho-.64)),zo=f*(1.5*(M=A*A))*n,vo=(f=3.7393792e-7*(u*=z))*(1.875*A*(1-2*b-3*v))*d,yo=f*(-1.875*A*(1+2*b-3*v))*i,bo=(f=2*(u*=z)*7.3636953e-9)*(35*M*s)*c,qo=f*(39.375*M*M)*h,wo=(f=1.1428639e-7*(u*=z))*(9.84375*A*(M*(1-2*b-5*v)+.33333333*(4*b-2+6*v)))*m,To=f*(A*(4.92187512*M*(-2-4*b+10*v)+6.56250012*(1+2*b-3*v)))*p,jo=(f=2*u*2.1765803e-9)*(29.53125*A*(2-8*b+v*(8*b-12+10*v)))*l,Eo=f*(29.53125*A*(-2-8*b+v*(12+8*b-10*v)))*g,_o=(B+N+N-($o+$o))%t,Ro=J+Co+2*(Q+Lo-Po)-K,ho=Bo,co=Jo}1===Mo&&(a=1+b,Do=2*(Uo=3*xo*xo*z*z)*(s=.75*(1+b)*(1+b))*(1+co*(.8125*co-2.5))*17891679e-13,Io=3*Uo*(a*=1.875*a*a)*(1+co*(6.60937*co-6))*2.2123015e-7*z,Uo=Uo*(.9375*A*A*(1+3*b)-.75*(1+b))*(d=1+2*co)*21460748e-13*z,_o=(B+N+q-$o)%t,Ro=J+V+Co+So+Lo-(K+Po)),ko=_o,Oo=K,fo=0,xo=K+0}return{em:ho,argpm:mo,inclm:lo,mm:po,nm:xo,nodem:go,irez:Mo,atime:fo,d2201:uo,d2211:zo,d3210:vo,d3222:yo,d4410:bo,d4422:qo,d5220:wo,d5232:To,d5421:jo,d5433:Eo,dedt:Fo,didt:Ao,dmdt:Co,dndt:0,dnodt:Lo,domdt:So,del1:Uo,del2:Do,del3:Io,xfact:Ro,xlamo:_o,xli:ko,xni:Oo}}({cosim:a,emsq:q,argpo:e.argpo,s1:S,s2:U,s3:D,s4:I,s5:R,sinim:n,ss1:k,ss2:O,ss3:P,ss4:Z,ss5:G,sz1:H,sz3:Y,sz11:$,sz13:B,sz21:J,sz23:K,sz31:N,sz33:Q,t:e.t,tc:0,gsto:e.gsto,mo:e.mo,mdot:e.mdot,no:e.no,nodeo:e.nodeo,nodedot:e.nodedot,xpidot:eo,z1:ao,z3:no,z11:ro,z13:io,z21:co,z23:ho,z31:mo,z33:lo,ecco:e.ecco,eccsq:Fo,em:b,argpm:0,inclm:j,mm:0,nm:E,nodem:0,irez:e.irez,atime:e.atime,d2201:e.d2201,d2211:e.d2211,d3210:e.d3210,d3222:e.d3222,d4410:e.d4410,d4422:e.d4422,d5220:e.d5220,d5232:e.d5232,d5421:e.d5421,d5433:e.d5433,dedt:e.dedt,didt:e.didt,dmdt:e.dmdt,dnodt:e.dnodt,domdt:e.domdt,del1:e.del1,del2:e.del2,del3:e.del3,xfact:e.xfact,xlamo:e.xlamo,xli:e.xli,xni:e.xni});e.irez=ko.irez,e.atime=ko.atime,e.d2201=ko.d2201,e.d2211=ko.d2211,e.d3210=ko.d3210,e.d3222=ko.d3222,e.d4410=ko.d4410,e.d4422=ko.d4422,e.d5220=ko.d5220,e.d5232=ko.d5232,e.d5421=ko.d5421,e.d5433=ko.d5433,e.dedt=ko.dedt,e.didt=ko.didt,e.dmdt=ko.dmdt,e.dnodt=ko.dnodt,e.domdt=ko.domdt,e.del1=ko.del1,e.del2=ko.del2,e.del3=ko.del3,e.xfact=ko.xfact,e.xlamo=ko.xlamo,e.xli=ko.xli,e.xni=ko.xni}1!==e.isimp&&(i=e.cc1*e.cc1,e.d2=4*wo*to*i,V=e.d2*to*e.cc1/3,e.d3=(17*wo+_)*V,e.d4=.5*V*wo*to*(221*wo+31*_)*e.cc1,e.t3cof=e.d2+2*i,e.t4cof=.25*(3*e.d3+e.cc1*(12*e.d2+10*i)),e.t5cof=.2*(3*e.d4+12*e.cc1*e.d3+6*e.d2*e.d2+15*i*(2*e.d2+i)))}y(e,0),e.init="n"}function q(o){return function(o){if(Array.isArray(o))return w(o)}(o)||function(o){if("undefined"!=typeof Symbol&&null!=o[Symbol.iterator]||null!=o["@@iterator"])return Array.from(o)}(o)||function(o,t){if(!o)return;if("string"==typeof o)return w(o,t);var e=Object.prototype.toString.call(o).slice(8,-1);"Object"===e&&o.constructor&&(e=o.constructor.name);if("Map"===e||"Set"===e)return Array.from(o);if("Arguments"===e||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(e))return w(o,t)}(o)||function(){throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function w(o,t){(null==t||t>o.length)&&(t=o.length);for(var e=0,s=new Array(t);e<t;e++)s[e]=o[e];return s}function T(o){return o*s}function j(o){return o*e}function E(o){var t=o.longitude,e=o.latitude,s=o.height,a=6378.137,n=(a-6356.7523142)/a,d=2*n-n*n,r=a/Math.sqrt(1-d*(Math.sin(e)*Math.sin(e)));return{x:(r+s)*Math.cos(e)*Math.cos(t),y:(r+s)*Math.cos(e)*Math.sin(t),z:(r*(1-d)+s)*Math.sin(e)}}var F={constants:Object.freeze({__proto__:null,deg2rad:e,earthRadius:d,j2:h,j3:m,j3oj2:p,j4:l,minutesPerDay:a,mu:n,pi:o,rad2deg:s,tumin:c,twoPi:t,vkmpersec:i,x2o3:x,xke:r}),propagate:function(){for(var o=arguments.length,t=new Array(o),e=0;e<o;e++)t[e]=arguments[e];var s=t[0],n=Array.prototype.slice.call(t,1),d=f.apply(void 0,q(n)),r=(d-s.jdsatepoch)*a;return y(s,r)},sgp4:y,twoline2satrec:function(t,s){var a=1440/(2*o),n=0,d={error:0};d.satnum=t.substring(2,7),d.epochyr=parseInt(t.substring(18,20),10),d.epochdays=parseFloat(t.substring(20,32)),d.ndot=parseFloat(t.substring(33,43)),d.nddot=parseFloat(".".concat(parseInt(t.substring(44,50),10),"E").concat(t.substring(50,52))),d.bstar=parseFloat("".concat(t.substring(53,54),".").concat(parseInt(t.substring(54,59),10),"E").concat(t.substring(59,61))),d.inclo=parseFloat(s.substring(8,16)),d.nodeo=parseFloat(s.substring(17,25)),d.ecco=parseFloat(".".concat(s.substring(26,33))),d.argpo=parseFloat(s.substring(34,42)),d.mo=parseFloat(s.substring(43,51)),d.no=parseFloat(s.substring(52,63)),d.no/=a,d.inclo*=e,d.nodeo*=e,d.argpo*=e,d.mo*=e;var r=g(n=d.epochyr<57?d.epochyr+2e3:d.epochyr+1900,d.epochdays),i=r.mon,c=r.day,h=r.hr,m=r.minute,l=r.sec;return d.jdsatepoch=f(n,i,c,h,m,l),b(d,{opsmode:"i",satn:d.satnum,epoch:d.jdsatepoch-2433281.5,xbstar:d.bstar,xecco:d.ecco,xargpo:d.argpo,xinclo:d.inclo,xmo:d.mo,xno:d.no,xnodeo:d.nodeo}),d},gstime:v,jday:f,invjday:function(o,t){var e=o-2415019.5,s=e/365.25,a=1900+Math.floor(s),n=Math.floor(.25*(a-1901)),d=e-(365*(a-1900)+n)+1e-11;d<1&&(d=e-(365*((a-=1)-1900)+(n=Math.floor(.25*(a-1901)))));var r=g(a,d),i=r.mon,c=r.day,h=r.hr,m=r.minute,l=r.sec-864e-9;return t?[a,i,c,h,m,Math.floor(l)]:new Date(Date.UTC(a,i-1,c,h,m,Math.floor(l)))},dopplerFactor:function(o,t,e){var s=7292115e-11,a={x:t.x-o.x,y:t.y-o.y,z:t.z-o.z};a.w=Math.sqrt(Math.pow(a.x,2)+Math.pow(a.y,2)+Math.pow(a.z,2));var n=e.x+s*o.y,d=e.y-s*o.x,r=e.z,i=(a.x*n+a.y*d+a.z*r)/a.w;return 1+i/299792.458*(i>=0?1:-1)},radiansToDegrees:T,degreesToRadians:j,degreesLat:function(t){if(t<-o/2||t>o/2)throw new RangeError("Latitude radians must be in range [-pi/2; pi/2].");return T(t)},degreesLong:function(t){if(t<-o||t>o)throw new RangeError("Longitude radians must be in range [-pi; pi].");return T(t)},radiansLat:function(o){if(o<-90||o>90)throw new RangeError("Latitude degrees must be in range [-90; 90].");return j(o)},radiansLong:function(o){if(o<-180||o>180)throw new RangeError("Longitude degrees must be in range [-180; 180].");return j(o)},geodeticToEcf:E,eciToGeodetic:function(e,s){for(var a=6378.137,n=Math.sqrt(e.x*e.x+e.y*e.y),d=(a-6356.7523142)/a,r=2*d-d*d,i=Math.atan2(e.y,e.x)-s;i<-o;)i+=t;for(;i>o;)i-=t;for(var c,h=0,m=Math.atan2(e.z,Math.sqrt(e.x*e.x+e.y*e.y));h<20;)c=1/Math.sqrt(1-r*(Math.sin(m)*Math.sin(m))),m=Math.atan2(e.z+a*c*r*Math.sin(m),n),h+=1;return{longitude:i,latitude:m,height:n/Math.cos(m)-a*c}},eciToEcf:function(o,t){return{x:o.x*Math.cos(t)+o.y*Math.sin(t),y:o.x*-Math.sin(t)+o.y*Math.cos(t),z:o.z}},ecfToEci:function(o,t){return{x:o.x*Math.cos(t)-o.y*Math.sin(t),y:o.x*Math.sin(t)+o.y*Math.cos(t),z:o.z}},ecfToLookAngles:function(t,e){var s,a,n,d,r,i,c=function(o,t){var e=o.longitude,s=o.latitude,a=E(o),n=t.x-a.x,d=t.y-a.y,r=t.z-a.z;return{topS:Math.sin(s)*Math.cos(e)*n+Math.sin(s)*Math.sin(e)*d-Math.cos(s)*r,topE:-Math.sin(e)*n+Math.cos(e)*d,topZ:Math.cos(s)*Math.cos(e)*n+Math.cos(s)*Math.sin(e)*d+Math.sin(s)*r}}(t,e);return a=(s=c).topS,n=s.topE,d=s.topZ,r=Math.sqrt(a*a+n*n+d*d),i=Math.asin(d/r),{azimuth:Math.atan2(-n,a)+o,elevation:i,rangeSat:r}}};return F}));
+
+</script>
+<script>
+{
+/*ASTRO*/
+const LAT=45.7855, LON=-92.3810, TZ='America/Chicago';
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const sind=x=>Math.sin(x*D2R), cosd=x=>Math.cos(x*D2R), atan2d=(y,x)=>Math.atan2(y,x)*R2D;
+const rev=x=>((x%360)+360)%360, clamp=(x,a,b)=>x<a?a:x>b?b:x;
+const SPH=sind(LAT), CPH=cosd(LAT);
+const jdOf=t=>t/86400000+2440587.5;
+const lstOf=t=>rev(280.46061837+360.98564736629*(jdOf(t)-2451545)+LON);
+
+function kepler(M,e){
+  let E=M+R2D*e*sind(M)*(1+e*cosd(M));
+  for(let k=0;k<8;k++){const dE=(E-R2D*e*sind(E)-M)/(1-e*cosd(E));E-=dE;if(Math.abs(dE)<1e-7)break;}
+  return E;
+}
+function orbit(el){
+  const [N,i,w,a,e,M0]=el, M=rev(M0), E=kepler(M,e);
+  const xv=a*(cosd(E)-e), yv=a*Math.sqrt(1-e*e)*sind(E);
+  const v=atan2d(yv,xv), r=Math.hypot(xv,yv), vw=v+w;
+  return {x:r*(cosd(N)*cosd(vw)-sind(N)*sind(vw)*cosd(i)),y:r*(sind(N)*cosd(vw)+cosd(N)*sind(vw)*cosd(i)),z:r*sind(vw)*sind(i),r,M};
+}
+const PN=['Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune'];
+const EL={
+  Mercury:d=>[48.3313+3.24587e-5*d,7.0047+5e-8*d,29.1241+1.01444e-5*d,0.387098,0.205635+5.59e-10*d,168.6562+4.0923344368*d],
+  Venus:d=>[76.6799+2.4659e-5*d,3.3946+2.75e-8*d,54.891+1.38374e-5*d,0.72333,0.006773-1.302e-9*d,48.0052+1.6021302244*d],
+  Mars:d=>[49.5574+2.11081e-5*d,1.8497-1.78e-8*d,286.5016+2.92961e-5*d,1.523688,0.093405+2.516e-9*d,18.6021+0.5240207766*d],
+  Jupiter:d=>[100.4542+2.76854e-5*d,1.303-1.557e-7*d,273.8777+1.64505e-5*d,5.20256,0.048498+4.469e-9*d,19.895+0.0830853001*d],
+  Saturn:d=>[113.6634+2.3898e-5*d,2.4886-1.081e-7*d,339.3939+2.97661e-5*d,9.55475,0.055546-9.499e-9*d,316.967+0.0334442282*d],
+  Uranus:d=>[74.0005+1.3978e-5*d,0.7733+1.9e-8*d,96.6612+3.0565e-5*d,19.18171-1.55e-8*d,0.047318+7.45e-9*d,142.5905+0.011725806*d],
+  Neptune:d=>[131.7806+3.0173e-5*d,1.77-2.55e-7*d,272.8461-6.027e-6*d,30.05826+3.313e-8*d,0.008606+2.15e-9*d,260.2471+0.005995147*d]
+};
+const MAGF={
+  Mercury:F=>-0.36+0.027*F+2.2e-13*F**6, Venus:F=>-4.34+0.013*F+4.2e-7*F**3, Mars:F=>-1.51+0.016*F,
+  Jupiter:F=>-9.25+0.014*F, Saturn:F=>-9.0+0.044*F, Uranus:F=>-7.15+0.001*F, Neptune:F=>-6.9+0.001*F
+};
+function eclToEq(lon,lat){
+  const e=23.4393, x=cosd(lat)*cosd(lon), y=cosd(lat)*sind(lon), z=sind(lat);
+  const ye=y*cosd(e)-z*sind(e), ze=y*sind(e)+z*cosd(e);
+  return {ra:rev(atan2d(ye,x)),dec:atan2d(ze,Math.hypot(x,ye))};
+}
+function bodies(t){
+  const d=jdOf(t)-2451543.5, pc=-3.82394e-5*d;
+  const ws=282.9404+4.70935e-5*d, es=0.016709-1.151e-9*d, Ms=rev(356.047+0.9856002585*d);
+  const Es=kepler(Ms,es), sxv=cosd(Es)-es, syv=Math.sqrt(1-es*es)*sind(Es);
+  const sr=Math.hypot(sxv,syv), slon=rev(atan2d(syv,sxv)+ws), xs=sr*cosd(slon), ys=sr*sind(slon);
+  const out={sun:Object.assign(eclToEq(slon+pc,0),{dist:sr,mag:-26.7})};
+  const Nm=125.1228-0.0529538083*d, wm=318.0634+0.1643573223*d, Mm=rev(115.3654+13.0649929509*d);
+  const mo=orbit([Nm,5.1454,wm,60.2666,0.0549,Mm]);
+  let mlon=atan2d(mo.y,mo.x), mlat=atan2d(mo.z,Math.hypot(mo.x,mo.y)), mr=mo.r;
+  const D=Mm+wm+Nm-(Ms+ws), F=Mm+wm;
+  mlon+=-1.274*sind(Mm-2*D)+0.658*sind(2*D)-0.186*sind(Ms)-0.059*sind(2*Mm-2*D)-0.057*sind(Mm-2*D+Ms)+0.053*sind(Mm+2*D)+0.046*sind(2*D-Ms)+0.041*sind(Mm-Ms)-0.035*sind(D)-0.031*sind(Mm+Ms)-0.015*sind(2*F-2*D)+0.011*sind(Mm-4*D);
+  mlat+=-0.173*sind(F-2*D)-0.055*sind(Mm-F-2*D)-0.046*sind(Mm+F-2*D)+0.033*sind(F+2*D)+0.017*sind(2*Mm+F);
+  mr+=-0.58*cosd(Mm-2*D)-0.46*cosd(2*D);
+  const elong=Math.acos(clamp(cosd(slon-mlon)*cosd(mlat),-1,1))*R2D;
+  out.moon=Object.assign(eclToEq(rev(mlon)+pc,mlat),{dist:mr,illum:(1-cosd(elong))/2,age:rev(mlon-slon)});
+  const P={};
+  for(const n of PN)P[n]=orbit(EL[n](d));
+  const Mj=P.Jupiter.M, Mz=P.Saturn.M, Mu=P.Uranus.M;
+  out.pl={};
+  for(const n of PN){
+    const o=P[n], r=o.r;
+    let lon=atan2d(o.y,o.x), lat=atan2d(o.z,Math.hypot(o.x,o.y));
+    if(n==='Jupiter')lon+=-0.332*sind(2*Mj-5*Mz-67.6)-0.056*sind(2*Mj-2*Mz+21)+0.042*sind(3*Mj-5*Mz+21)-0.036*sind(Mj-2*Mz)+0.022*cosd(Mj-Mz)+0.023*sind(2*Mj-3*Mz+52)-0.016*sind(Mj-5*Mz-69);
+    if(n==='Saturn'){lon+=0.812*sind(2*Mj-5*Mz-67.6)-0.229*cosd(2*Mj-4*Mz-2)+0.119*sind(Mj-2*Mz-3)+0.046*sind(2*Mj-6*Mz-69)+0.014*sind(Mj-3*Mz+32);lat+=-0.02*cosd(2*Mj-4*Mz-2)+0.018*sind(2*Mj-6*Mz-49);}
+    if(n==='Uranus')lon+=0.04*sind(Mz-2*Mu+6)+0.035*sind(Mz-3*Mu+33)-0.015*sind(Mj-Mu+20);
+    const xg=r*cosd(lat)*cosd(lon)+xs, yg=r*cosd(lat)*sind(lon)+ys, zg=r*sind(lat);
+    const R=Math.hypot(xg,yg,zg), glon=rev(atan2d(yg,xg)), glat=atan2d(zg,Math.hypot(xg,yg));
+    const FV=Math.acos(clamp((r*r+R*R-sr*sr)/(2*r*R),-1,1))*R2D;
+    let mag=MAGF[n](FV)+5*Math.log10(r*R), B=0;
+    if(n==='Saturn'){const ir=28.06,Nr=169.51+3.82e-5*d;B=Math.asin(sind(glat)*cosd(ir)-cosd(glat)*sind(ir)*sind(glon-Nr))*R2D;mag+=-2.6*Math.abs(sind(B))+1.2*sind(B)**2;}
+    out.pl[n]=Object.assign(eclToEq(glon+pc,glat),{dist:R,mag,B,lon:glon+pc});
+  }
+  return out;
+}
+function hv(ra,dec,lst){
+  const H=(lst-ra)*D2R, cd=cosd(dec), sd=sind(dec), cH=Math.cos(H);
+  return [-cd*Math.sin(H), sd*CPH-cd*SPH*cH, SPH*sd+CPH*cd*cH];
+}
+const altOfV=v=>Math.asin(clamp(v[2],-1,1))*R2D, azOfV=v=>rev(Math.atan2(v[0],v[1])*R2D);
+function avec(alt,az){const a=alt*D2R,z=az*D2R;return [Math.cos(a)*Math.sin(z),Math.cos(a)*Math.cos(z),Math.sin(a)];}
+function moonVec(B,lst){const v=hv(B.moon.ra,B.moon.dec,lst),a=altOfV(v);return avec(a-Math.asin(1/B.moon.dist)*R2D*cosd(a),azOfV(v));}
+/*END*/
+
+// ---------- star catalog: key raHours dec mag B-V name ----------
+const STAR_TXT=`UMa_a 11.062 61.751 1.79 1.07 Dubhe
+UMa_b 11.031 56.382 2.37 0.03 Merak
+UMa_g 11.897 53.695 2.44 0.04 Phecda
+UMa_d 12.257 57.033 3.31 0.08 Megrez
+UMa_e 12.900 55.960 1.77 -0.02 Alioth
+UMa_z 13.399 54.925 2.27 0.02 Mizar
+UMa_h 13.792 49.313 1.86 -0.19 Alkaid
+UMa_o 8.504 60.718 3.36 0.85 Muscida
+UMa_q 9.548 51.678 3.17 0.46
+UMa_i 8.987 48.042 3.14 0.19 Talitha
+UMa_k 9.060 47.157 3.60 0.00
+UMa_l 10.285 42.914 3.45 0.03 Tania Borealis
+UMa_m 10.372 41.499 3.05 1.59 Tania Australis
+UMa_n 11.308 33.094 3.48 1.40 Alula Borealis
+UMa_x 11.303 31.529 3.79 0.59 Alula Australis
+UMa_y 11.161 44.498 3.01 1.14
+UMa_c 11.767 47.779 3.69 1.18
+UMa_u 9.849 59.039 3.80 0.28
+UMa_23 9.525 63.062 3.65 0.35
+UMi_a 2.530 89.264 1.98 0.60 Polaris
+UMi_d 17.537 86.586 4.35 0.02 Yildun
+UMi_e 16.766 82.037 4.21 0.89
+UMi_z 15.734 77.794 4.29 0.04
+UMi_h 16.292 75.755 4.95 0.37
+UMi_b 14.845 74.156 2.08 1.47 Kochab
+UMi_g 15.345 71.834 3.05 0.05 Pherkad
+Cas_b 0.153 59.150 2.27 0.34 Caph
+Cas_a 0.675 56.537 2.24 1.17 Schedar
+Cas_g 0.945 60.717 2.47 -0.15 Navi
+Cas_d 1.430 60.235 2.68 0.13 Ruchbah
+Cas_e 1.907 63.670 3.38 -0.15 Segin
+Cep_a 21.310 62.585 2.45 0.22 Alderamin
+Cep_b 21.478 70.561 3.23 -0.22 Alfirk
+Cep_g 23.656 77.632 3.21 1.03 Errai
+Cep_i 22.828 66.200 3.52 1.05
+Cep_z 22.181 58.201 3.35 1.57
+Cep_d 22.486 58.415 4.07 0.60
+Dra_a 14.073 64.376 3.65 -0.05 Thuban
+Dra_g 17.943 51.489 2.23 1.52 Eltanin
+Dra_b 17.507 52.301 2.79 0.98 Rastaban
+Dra_x 17.892 56.873 3.75 1.18 Grumium
+Dra_n 17.536 55.184 4.88 0.26
+Dra_d 19.209 67.661 3.07 1.00 Altais
+Dra_e 19.803 70.268 3.83 0.89
+Dra_c 18.351 72.733 3.57 0.49
+Dra_z 17.146 65.715 3.17 -0.12 Aldhibah
+Dra_h 16.400 61.514 2.73 0.91
+Dra_q 16.031 58.565 4.01 0.52
+Dra_i 15.415 58.966 3.29 1.16 Edasich
+Dra_k 12.558 69.788 3.87 -0.13
+Dra_l 11.523 69.331 3.84 1.62 Giausar
+Cyg_a 20.690 45.280 1.25 0.09 Deneb
+Cyg_g 20.370 40.257 2.23 0.67 Sadr
+Cyg_b 19.512 27.960 3.08 1.13 Albireo
+Cyg_d 19.750 45.131 2.87 -0.03 Fawaris
+Cyg_e 20.770 33.970 2.48 1.03 Aljanah
+Cyg_z 21.216 30.227 3.21 0.99
+Cyg_h 19.938 35.083 3.89 1.02
+Lyr_a 18.616 38.784 0.03 0.00 Vega
+Lyr_e 18.739 39.670 4.67 0.19
+Lyr_z 18.746 37.605 4.36 0.19
+Lyr_d 18.908 36.899 4.30 1.68
+Lyr_b 18.835 33.363 3.52 0.00 Sheliak
+Lyr_g 18.982 32.690 3.25 -0.05 Sulafat
+Aql_a 19.846 8.868 0.77 0.22 Altair
+Aql_g 19.771 10.613 2.72 1.52 Tarazed
+Aql_b 19.922 6.407 3.71 0.86 Alshain
+Aql_d 19.425 3.115 3.36 0.32
+Aql_z 19.090 13.863 2.99 0.01
+Aql_q 20.188 -0.822 3.23 -0.07
+Aql_l 19.104 -4.882 3.43 -0.09
+Aql_h 19.874 1.006 3.87 0.89
+Ori_a 5.919 7.407 0.50 1.85 Betelgeuse
+Ori_b 5.242 -8.202 0.13 -0.03 Rigel
+Ori_g 5.419 6.350 1.64 -0.22 Bellatrix
+Ori_d 5.533 -0.299 2.23 -0.22 Mintaka
+Ori_e 5.604 -1.202 1.69 -0.18 Alnilam
+Ori_z 5.679 -1.943 1.77 -0.21 Alnitak
+Ori_k 5.796 -9.670 2.06 -0.17 Saiph
+Ori_l 5.585 9.934 3.39 -0.18 Meissa
+Ori_p3 4.830 6.961 3.19 0.45
+Ori_p2 4.843 8.900 4.35 0.01
+Ori_p4 4.853 5.605 3.68 -0.17
+Ori_p5 4.904 2.441 3.72 -0.18
+Ori_p1 4.910 10.151 4.65 0.08
+Ori_m 6.039 9.648 4.12 0.16
+Ori_x 6.247 14.209 4.45 -0.18
+Ori_n 6.126 14.768 4.42 -0.17
+Ori_c1 5.906 20.276 4.41 0.59
+Ori_c2 6.064 20.138 4.63 0.28
+Ori_i 5.590 -5.910 2.77 -0.24 Hatysa
+Ori_q1 5.588 -5.390 4.00 0.00 Trapezium
+Tau_a 4.599 16.509 0.85 1.54 Aldebaran
+Tau_b 5.438 28.608 1.65 -0.13 Elnath
+Tau_z 5.627 21.143 3.00 -0.19
+Tau_q2 4.478 15.871 3.40 0.18
+Tau_g 4.330 15.628 3.65 0.99 Prima Hyadum
+Tau_d 4.382 17.543 3.76 0.98
+Tau_e 4.477 19.180 3.53 1.01 Ain
+Tau_l 4.011 12.490 3.47 -0.12
+Tau_h 3.791 24.105 2.87 -0.09 Alcyone
+Tau_27 3.819 24.053 3.62 -0.08 Atlas
+Tau_17 3.747 24.113 3.70 -0.11 Electra
+Tau_20 3.763 24.368 3.87 -0.07 Maia
+Tau_23 3.772 23.948 4.18 -0.06 Merope
+Tau_19 3.754 24.467 4.30 -0.11 Taygeta
+Tau_o 3.414 9.029 3.60 0.89
+Tau_x 3.453 9.733 3.74 -0.09
+Gem_a 7.577 31.889 1.58 0.03 Castor
+Gem_b 7.755 28.026 1.14 1.00 Pollux
+Gem_g 6.629 16.399 1.93 0.00 Alhena
+Gem_e 6.732 25.131 2.98 1.40 Mebsuta
+Gem_m 6.383 22.514 2.88 1.64 Tejat
+Gem_h 6.248 22.507 3.28 1.60 Propus
+Gem_d 7.335 21.982 3.53 0.34 Wasat
+Gem_x 6.755 12.896 3.36 0.43
+Gem_z 7.068 20.570 3.79 0.79 Mekbuda
+Gem_k 7.741 24.398 3.57 0.93
+Gem_l 7.301 16.540 3.58 0.11
+Gem_i 7.429 27.798 3.79 1.03
+Gem_t 7.186 30.245 4.41 1.26
+Gem_q 6.880 33.961 3.60 0.10
+Gem_n 6.483 20.212 4.15 -0.13
+CMa_a 6.752 -16.716 -1.46 0.00 Sirius
+CMa_b 6.378 -17.956 1.98 -0.23 Mirzam
+CMa_e 6.977 -28.972 1.50 -0.21 Adhara
+CMa_d 7.140 -26.393 1.83 0.68 Wezen
+CMa_h 7.402 -29.303 2.45 -0.08 Aludra
+CMa_g 7.063 -15.633 4.12 -0.12
+CMa_o2 7.050 -23.833 3.02 -0.08
+CMa_z 6.338 -30.063 3.02 -0.19 Furud
+CMa_i 6.936 -17.054 4.37 -0.07
+CMa_q 6.903 -12.039 4.07 1.43
+CMa_s 7.028 -27.934 3.47 1.73
+CMi_a 7.655 5.225 0.34 0.42 Procyon
+CMi_b 7.453 8.289 2.89 -0.09 Gomeisa
+Aur_a 5.278 45.998 0.08 0.80 Capella
+Aur_b 5.992 44.948 1.90 0.03 Menkalinan
+Aur_q 5.995 37.213 2.62 -0.08 Mahasim
+Aur_i 4.950 33.166 2.69 1.53 Hassaleh
+Aur_e 5.033 43.823 2.99 0.54 Almaaz
+Aur_z 5.041 41.076 3.75 1.22
+Aur_h 5.109 41.234 3.17 -0.18
+Per_a 3.405 49.861 1.79 0.48 Mirfak
+Per_b 3.136 40.956 2.12 -0.05 Algol
+Per_g 3.080 53.506 2.93 0.70
+Per_d 3.715 47.788 3.01 -0.13
+Per_e 3.964 40.010 2.89 -0.18
+Per_z 3.902 31.884 2.85 0.12
+Per_h 2.845 55.896 3.76 1.68
+Per_x 3.983 35.791 4.04 0.01 Menkib
+Per_o 3.738 32.288 3.83 0.05 Atik
+Per_k 3.158 44.857 3.80 0.98
+Per_r 3.086 38.840 3.39 1.65
+Per_n 3.753 42.578 3.77 0.42
+And_a 0.140 29.091 2.06 -0.11 Alpheratz
+And_b 1.162 35.621 2.05 1.58 Mirach
+And_g 2.065 42.330 2.10 1.37 Almach
+And_d 0.655 30.861 3.27 1.28
+And_m 0.946 38.499 3.87 0.13
+And_n 0.830 41.079 4.53 -0.15
+Peg_a 23.079 15.205 2.49 -0.04 Markab
+Peg_b 23.063 28.083 2.42 1.67 Scheat
+Peg_g 0.221 15.184 2.83 -0.23 Algenib
+Peg_e 21.736 9.875 2.39 1.53 Enif
+Peg_z 22.691 10.831 3.40 -0.09 Homam
+Peg_q 22.170 6.198 3.53 0.08
+Peg_h 22.717 30.221 2.94 0.86 Matar
+Peg_m 22.833 24.602 3.48 0.93
+Peg_l 22.775 23.566 3.95 1.07
+Peg_i 22.117 25.345 3.76 0.44
+Peg_k 21.744 25.645 4.13 0.43
+Peg_p 22.166 33.178 4.29 0.46
+Leo_a 10.140 11.967 1.35 -0.11 Regulus
+Leo_b 11.818 14.572 2.14 0.09 Denebola
+Leo_g 10.333 19.842 2.01 1.15 Algieba
+Leo_d 11.235 20.524 2.56 0.12 Zosma
+Leo_q 11.237 15.430 3.33 -0.01 Chertan
+Leo_e 9.764 23.774 2.98 0.81 Algenubi
+Leo_m 9.880 26.007 3.88 1.22 Rasalas
+Leo_z 10.278 23.417 3.43 0.31 Adhafera
+Leo_h 10.122 16.763 3.48 -0.03
+Boo_a 14.261 19.182 -0.05 1.23 Arcturus
+Boo_e 14.750 27.074 2.37 0.97 Izar
+Boo_g 14.535 38.308 3.04 0.19 Seginus
+Boo_b 15.032 40.391 3.49 0.97 Nekkar
+Boo_d 15.258 33.315 3.46 0.96
+Boo_h 13.911 18.398 2.68 0.58 Muphrid
+Boo_r 14.531 30.371 3.57 1.30
+Boo_z 14.686 13.728 3.78 0.05
+CrB_a 15.578 26.715 2.23 -0.02 Alphecca
+CrB_b 15.464 29.106 3.66 0.28
+CrB_q 15.549 31.359 4.14 -0.13
+CrB_g 15.713 26.296 3.81 0.00
+CrB_d 15.827 26.068 4.63 0.80
+CrB_e 15.960 26.878 4.15 1.23
+CrB_i 16.024 29.851 4.98 -0.06
+Her_b 16.504 21.490 2.77 0.94 Kornephoros
+Her_z 16.688 31.603 2.81 0.65
+Her_h 16.715 38.922 3.48 0.92
+Her_p 17.251 36.809 3.16 1.44
+Her_e 17.005 30.926 3.92 -0.01
+Her_d 17.250 24.839 3.14 0.08 Sarin
+Her_a 17.244 14.390 3.35 1.44 Rasalgethi
+Her_g 16.365 19.153 3.75 0.27
+Her_m 17.774 27.720 3.42 0.75
+Her_x 17.963 29.248 3.70 0.94
+Her_q 17.938 37.250 3.86 1.35
+Her_i 17.657 46.006 3.80 -0.18
+Her_s 16.568 42.437 4.20 -0.01
+Her_t 16.330 46.313 3.89 -0.15
+Sco_a 16.490 -26.432 1.06 1.83 Antares
+Sco_b 16.091 -19.805 2.62 -0.07 Acrab
+Sco_d 16.006 -22.622 2.29 -0.12 Dschubba
+Sco_p 15.981 -26.114 2.89 -0.19
+Sco_s 16.353 -25.593 2.89 0.13 Alniyat
+Sco_t 16.598 -28.216 2.82 -0.25
+Sco_e 16.836 -34.293 2.29 1.15
+Sco_m 16.864 -38.047 3.04 -0.20
+Sco_z 16.910 -42.362 3.62 1.37
+Sco_h 17.203 -43.239 3.33 0.41
+Sco_q 17.622 -42.998 1.86 0.40 Sargas
+Sco_i 17.793 -40.127 2.99 0.51
+Sco_k 17.708 -39.030 2.41 -0.22
+Sco_l 17.560 -37.104 1.62 -0.22 Shaula
+Sco_u 17.513 -37.296 2.70 -0.22 Lesath
+Sco_r 15.948 -29.214 3.87 -0.15
+Sgr_e 18.403 -34.385 1.85 -0.03 Kaus Australis
+Sgr_s 18.921 -26.297 2.05 -0.13 Nunki
+Sgr_z 19.043 -29.880 2.60 0.08 Ascella
+Sgr_d 18.350 -29.828 2.70 1.38 Kaus Media
+Sgr_l 18.466 -25.422 2.81 1.02 Kaus Borealis
+Sgr_g 18.097 -30.424 2.99 1.00 Alnasl
+Sgr_f 18.761 -26.991 3.17 -0.11
+Sgr_t 19.116 -27.671 3.32 1.19
+Sgr_p 19.163 -21.024 2.89 0.35
+Sgr_m 18.229 -21.059 3.86 0.23
+Sgr_h 18.294 -36.762 3.11 1.56
+Vir_a 13.420 -11.161 0.97 -0.23 Spica
+Vir_g 12.694 -1.449 2.74 0.36 Porrima
+Vir_e 13.036 10.959 2.85 0.94 Vindemiatrix
+Vir_d 12.927 3.397 3.38 1.58 Minelauva
+Vir_z 13.578 -0.596 3.37 0.11 Heze
+Vir_b 11.845 1.765 3.61 0.55 Zavijava
+Vir_h 12.332 -0.667 3.89 0.02
+Vir_q 13.166 -5.539 4.38 0.00
+Vir_i 14.267 -6.000 4.08 0.52
+Vir_m 14.718 -5.658 3.88 0.38
+Ari_a 2.120 23.462 2.01 1.15 Hamal
+Ari_b 1.911 20.808 2.64 0.13 Sheratan
+Ari_g 1.892 19.294 3.88 -0.04 Mesarthim
+Ari_41 2.833 27.260 3.63 -0.10
+Tri_b 2.159 34.987 3.00 0.14
+Tri_a 1.885 29.579 3.41 0.49 Mothallah
+Tri_g 2.289 33.847 4.01 0.02
+Cnc_b 8.275 9.186 3.52 1.48 Tarf
+Cnc_d 8.745 18.154 3.94 1.08 Asellus Australis
+Cnc_g 8.721 21.469 4.66 0.02 Asellus Borealis
+Cnc_i 8.778 28.760 4.02 0.97
+Cnc_a 8.975 11.858 4.25 0.14 Acubens
+Lep_a 5.546 -17.822 2.58 0.21 Arneb
+Lep_b 5.471 -20.759 2.84 0.82 Nihal
+Lep_e 5.091 -22.371 3.19 1.46
+Lep_m 5.216 -16.206 3.31 -0.11
+Lep_g 5.741 -22.448 3.60 0.47
+Lep_d 5.855 -20.879 3.81 0.99
+Lep_z 5.783 -14.822 3.55 0.10
+Lep_h 5.940 -14.168 3.71 0.33
+Lib_a 14.848 -16.042 2.75 0.15 Zubenelgenubi
+Lib_b 15.283 -9.383 2.61 -0.07 Zubeneschamali
+Lib_s 15.068 -25.282 3.29 1.70 Brachium
+Lib_g 15.592 -14.789 3.91 1.01
+Oph_a 17.582 12.560 2.08 0.15 Rasalhague
+Oph_b 17.725 4.567 2.77 1.16 Cebalrai
+Oph_h 17.173 -15.725 2.43 0.06 Sabik
+Oph_z 16.619 -10.567 2.56 0.02
+Oph_d 16.239 -3.694 2.74 1.58 Yed Prior
+Oph_e 16.305 -4.692 3.24 0.97
+Oph_k 16.961 9.375 3.20 1.15
+Oph_n 17.984 -9.774 3.33 0.99
+Oph_q 17.367 -24.999 3.27 -0.22
+Ser_a 15.738 6.426 2.63 1.17 Unukalhai
+Ser_b 15.770 15.422 3.65 0.06
+Ser_g 15.941 15.661 3.85 0.48
+Ser_k 15.812 18.142 4.09 1.62
+Ser_d 15.580 10.539 3.80 0.26
+Ser_e 15.847 4.478 3.71 0.15
+Ser_m 15.827 -3.430 3.53 -0.04
+Ser_h 18.355 -2.899 3.26 0.94
+Ser_q 18.937 4.204 4.10 0.17 Alya
+Ser_x 17.627 -15.398 3.54 0.26
+Del_b 20.626 14.595 3.63 0.44 Rotanev
+Del_a 20.661 15.912 3.77 -0.06 Sualocin
+Del_g 20.777 16.124 4.27 1.04
+Del_d 20.724 15.075 4.43 0.32
+Del_e 20.554 11.303 4.03 -0.13
+Sge_g 19.979 19.492 3.47 1.57
+Sge_d 19.790 18.534 3.82 1.41
+Sge_a 19.668 18.014 4.37 0.78
+Sge_b 19.684 17.476 4.37 1.05
+Cap_d 21.784 -16.127 2.85 0.29 Deneb Algedi
+Cap_b 20.350 -14.781 3.05 0.79 Dabih
+Cap_a 20.300 -12.545 3.57 0.88 Algedi
+Cap_g 21.668 -16.662 3.67 0.32 Nashira
+Cap_z 21.444 -22.411 3.74 1.00
+Cap_q 21.099 -17.233 4.08 0.00
+Cap_w 20.864 -26.919 4.12 1.64
+Cap_y 20.768 -25.270 4.13 0.43
+Aqr_b 21.526 -5.571 2.90 0.83 Sadalsuud
+Aqr_a 22.096 -0.320 2.95 0.98 Sadalmelik
+Aqr_d 22.911 -15.821 3.27 0.05 Skat
+Aqr_z 22.481 -0.020 3.65 0.38
+Aqr_g 22.361 -1.387 3.84 -0.05 Sadachbia
+Aqr_h 22.589 -0.117 4.04 -0.09
+Aqr_p 22.421 1.378 4.66 0.00
+Aqr_l 22.877 -7.580 3.73 1.64
+Aqr_e 20.795 -9.496 3.77 0.00 Albali
+Aqr_t 22.826 -13.592 4.05 1.60
+Aqr_q 22.281 -7.783 4.16 0.98 Ancha
+PsA_a 22.961 -29.622 1.16 0.09 Fomalhaut
+Psc_a 2.034 2.764 4.18 0.03 Alrescha
+Psc_h 1.525 15.346 3.62 0.97
+Psc_o 1.757 9.158 4.26 0.96
+Psc_g 23.286 3.282 3.70 0.92
+Psc_i 23.666 5.626 4.13 0.51
+Psc_q 23.466 6.379 4.27 1.07
+Psc_l 23.700 1.780 4.49 0.20
+Psc_k 23.449 1.256 4.94 0.03
+Psc_w 23.988 6.863 4.01 0.42
+Psc_d 0.811 7.585 4.43 1.50
+Psc_e 1.049 7.890 4.28 0.96
+Psc_n 1.691 5.488 4.45 1.36
+Psc_f 1.229 24.584 4.65 1.04
+Psc_u 1.325 27.264 4.74 0.03
+Psc_t 1.194 30.090 4.51 1.09
+Cet_a 3.038 4.090 2.53 1.64 Menkar
+Cet_b 0.727 -17.987 2.04 1.02 Diphda
+Cet_o 2.322 -2.977 3.04 1.42 Mira
+Cet_g 2.722 3.236 3.47 0.09
+Cet_d 2.658 0.329 4.07 -0.22
+Cet_t 1.734 -15.938 3.50 0.72 Tau Ceti
+Cet_z 1.858 -10.335 3.73 1.14
+Cet_q 1.400 -8.183 3.60 1.06
+Cet_h 1.143 -10.182 3.45 1.16
+Cet_i 0.324 -8.824 3.56 1.22
+Cet_n 2.598 5.593 4.86 0.87
+Cet_x2 2.469 8.460 4.28 -0.06
+Cet_m 2.750 10.114 4.27 0.31
+Cet_l 2.995 8.907 4.70 -0.12
+Crv_g 12.263 -17.542 2.59 -0.11 Gienah
+Crv_b 12.573 -23.397 2.65 0.89 Kraz
+Crv_d 12.498 -16.515 2.94 -0.05 Algorab
+Crv_e 12.169 -22.620 3.00 1.33 Minkar
+Crv_a 12.140 -24.729 4.02 0.32 Alchiba
+Hya_a 9.460 -8.659 1.98 1.44 Alphard
+Hya_z 8.923 5.946 3.10 1.00
+Hya_e 8.779 6.419 3.38 0.68
+Hya_d 8.628 5.704 4.14 0.00
+Hya_s 8.646 3.341 4.45 1.21
+Hya_h 8.720 3.398 4.30 -0.20
+Hya_i 9.664 -1.143 3.91 1.32
+Hya_q 9.239 2.314 3.88 -0.06
+Hya_n 10.827 -16.194 3.11 1.25
+Hya_l 10.177 -12.354 3.61 1.01
+Hya_m 10.434 -16.836 3.81 1.48
+Hya_g 13.315 -23.171 3.00 0.92
+Hya_p 14.106 -26.682 3.25 1.12
+Hya_x 11.550 -31.858 3.54 0.94
+Hya_b 11.882 -33.908 4.28 -0.10
+CVn_a 12.934 38.318 2.89 -0.12 Cor Caroli
+CVn_b 12.562 41.357 4.26 0.59 Chara
+Eri_b 5.130 -5.086 2.78 0.13 Cursa
+Car_a 6.399 -52.696 -0.74 0.15 Canopus
+Cen_a 14.660 -60.834 -0.27 0.71 Rigil Kentaurus
+Eri_a 1.629 -57.237 0.46 -0.16 Achernar
+Cen_b 14.064 -60.373 0.61 -0.23 Hadar
+Cru_a 12.443 -63.099 0.77 -0.24 Acrux
+Cru_b 12.795 -59.689 1.25 -0.24 Mimosa
+Cru_g 12.519 -57.113 1.63 1.60 Gacrux
+Gru_a 22.137 -46.961 1.74 -0.13 Alnair
+Pav_a 20.427 -56.735 1.94 -0.12 Peacock
+Car_e 8.375 -59.510 1.86 1.28 Avior
+Car_b 9.220 -69.717 1.67 0.07 Miaplacidus
+TrA_a 16.811 -69.028 1.91 1.45 Atria
+Vel_g 8.159 -47.337 1.83 -0.22 Regor
+Vel_l 9.133 -43.433 2.21 1.66 Suhail
+Pup_z 8.060 -40.003 2.21 -0.27 Naos
+Phe_a 0.438 -42.306 2.40 1.09 Ankaa
+Cen_q 14.111 -36.370 2.06 1.01 Menkent
+UMa_80 13.420 54.988 4.01 0.16 Alcor
+Eri_e 3.549 -9.458 3.73 0.88 Ran
+Cyg_61 21.115 38.750 5.20 1.10 61 Cygni
+Car_h 10.745 -59.685 4.50 0.60 Eta Carinae
+Cep_m 21.725 58.780 4.08 2.35 Garnet Star
+Cen_Prox 14.495 -62.679 11.13 1.82 Proxima Centauri
+Oph_Barnard 17.963 4.693 9.51 1.57 Barnard's Star`;
+
+const CONS=[
+['UMa','Ursa Major','a-b b-g g-d d-a d-e e-z z-h a-23 23-o 23-u b-u u-q q-i q-k g-c c-y y-m m-l c-n n-x'],
+['UMi','Ursa Minor','a-d d-e e-z z-b b-g g-h h-z'],
+['Cas','Cassiopeia','b-a a-g g-d d-e'],
+['Cep','Cepheus','a-b b-i i-z z-a b-g g-i z-d'],
+['Dra','Draco','l-k k-a a-i i-q q-h h-z z-c c-e e-d d-x x-n n-b b-g g-x'],
+['Cyg','Cygnus','a-g g-h h-b d-g g-e e-z'],
+['Lyr','Lyra','a-e a-z z-b b-g g-d d-z'],
+['Aql','Aquila','z-g g-a a-b b-h h-q a-d d-l'],
+['Ori','Orion','a-l l-g a-z g-d d-e e-z z-k d-b g-p3 p1-p2 p2-p3 p3-p4 p4-p5 a-m m-n n-c1 m-x x-c2 q1-i'],
+['Tau','Taurus','g-d d-e e-b g-q2 q2-a a-z g-l l-x x-o'],
+['Gem','Gemini','a-t t-q t-e e-m m-h e-n t-i i-b b-k b-d d-z z-g d-l l-x'],
+['CMa','Canis Major','a-b a-i i-g i-q a-o2 o2-d d-h d-s s-e e-z'],
+['CMi','Canis Minor','a-b'],
+['Aur','Auriga','a-b b-q q-Tau_b Tau_b-i i-h h-a a-e e-z z-h'],
+['Per','Perseus','h-g g-a a-d d-n n-e e-x x-z z-o a-k k-b b-r'],
+['And','Andromeda','a-d d-b b-g b-m m-n'],
+['Peg','Pegasus','a-b b-And_a And_a-g g-a a-z z-q q-e b-m m-l l-i i-k b-h h-p'],
+['Leo','Leo','a-h h-g g-z z-m m-e g-d d-b b-q q-a q-d'],
+['Boo','Boötes','a-e e-d d-b b-g g-r r-a a-h a-z'],
+['CrB','Corona Borealis','q-b b-a a-g g-d d-e e-i'],
+['Her','Hercules','z-h h-p p-e e-z z-b b-g e-d d-a d-m m-x h-s s-t p-q q-i'],
+['Sco','Scorpius','b-d d-p p-r d-s s-a a-t t-e e-m m-z z-h h-q q-i i-k k-l l-u'],
+['Sgr','Sagittarius','g-d g-e d-e d-l l-f f-d f-s s-t t-z z-f z-e l-m s-p e-h'],
+['Vir','Virgo','b-h h-g g-d d-e g-q q-a a-z z-d a-i i-m'],
+['Ari','Aries','41-a a-b b-g'],
+['Tri','Triangulum','a-b b-g g-a'],
+['Cnc','Cancer','b-d d-g g-i d-a'],
+['Lep','Lepus','e-m m-a a-b b-e a-z z-h h-d d-g g-b'],
+['Lib','Libra','a-b b-g g-a a-s'],
+['Oph','Ophiuchus','a-b b-h h-z z-e e-d d-k k-a h-q b-n'],
+['Ser','Serpens','m-e e-a a-d d-b b-g g-k k-b x-h h-q'],
+['Del','Delphinus','e-b b-a a-g g-d d-b'],
+['Sge','Sagitta','g-d d-a d-b'],
+['Cap','Capricornus','a-b b-y y-w w-z z-d d-g g-q q-a'],
+['Aqr','Aquarius','e-b b-a a-p a-g g-z z-h a-q q-l l-t t-d'],
+['Psc','Pisces','g-q q-i i-l l-k k-g i-w w-d d-e e-n n-a a-o o-h h-f f-u u-t'],
+['Cet','Cetus','i-b b-t t-z z-q q-h h-b z-o o-d d-g g-a a-l l-m m-x2 x2-n n-g'],
+['Crv','Corvus','g-d d-b b-e e-g e-a'],
+['Hya','Hydra','d-e e-z z-h h-s s-d z-q q-i i-a a-l l-m m-n n-x x-b b-g g-p'],
+['CVn','Canes Venatici','a-b']
+];
+const CN={PsA:'Piscis Austrinus',Eri:'Eridanus',Car:'Carina',Cen:'Centaurus',Cru:'Crux',Gru:'Grus',Pav:'Pavo',TrA:'Triangulum Australe',Vel:'Vela',Pup:'Puppis',Phe:'Phoenix'};
+const CONSET=new Set();
+CONS.forEach(c=>{CN[c[0]]=c[1];CONSET.add(c[0]);});
+const DSO_TXT=`M1|Crab Nebula|5.575|22.01|SNR|t|The wreck of a star seen exploding in 1054.
+M2|M2|21.558|-0.82|GC|b
+M3|M3|13.703|28.38|GC|b
+M4|M4|16.393|-26.53|GC|b|One of the closest globular clusters, beside Antares.
+M5|M5|15.310|2.08|GC|b
+M6|Butterfly Cluster|17.668|-32.25|OC|b
+M7|Ptolemy Cluster|17.898|-34.82|OC|e|Low in the south from Siren, above Scorpius’s stinger.
+M8|Lagoon Nebula|18.063|-24.38|N|b|A glowing gas cloud visible to the eye from a dark site.
+M9|M9|17.320|-18.52|GC|t
+M10|M10|16.952|-4.10|GC|b
+M11|Wild Duck Cluster|18.851|-6.27|OC|b
+M12|M12|16.787|-1.95|GC|b
+M13|Hercules Cluster|16.695|36.46|GC|b|A ball of a few hundred thousand old stars. Binoculars show a fuzzy dot.
+M14|M14|17.627|-3.25|GC|t
+M15|M15|21.500|12.17|GC|b
+M16|Eagle Nebula|18.313|-13.78|N|b|Home of the Pillars of Creation.
+M17|Omega Nebula|18.347|-16.18|N|b
+M18|M18|18.333|-17.13|OC|b
+M19|M19|17.044|-26.27|GC|t
+M20|Trifid Nebula|18.040|-23.03|N|t
+M21|M21|18.077|-22.50|OC|b
+M22|M22|18.607|-23.90|GC|b|One of the brightest globular clusters, above the Teapot’s lid.
+M23|M23|17.950|-19.02|OC|b
+M24|Sagittarius Star Cloud|18.283|-18.52|SC|e
+M25|M25|18.528|-19.25|OC|b
+M26|M26|18.754|-9.40|OC|t
+M27|Dumbbell Nebula|19.993|22.72|PN|b|Gas thrown off by a dying Sun-like star.
+M28|M28|18.409|-24.87|GC|t
+M29|M29|20.398|38.52|OC|b
+M30|M30|21.673|-23.18|GC|t
+M31|Andromeda Galaxy|0.712|41.27|G|e|The nearest big galaxy, about 2.5 million light-years away. A faint oval smudge on a dark night.
+M32|M32|0.712|40.87|G|t|A small companion galaxy of Andromeda.
+M33|Triangulum Galaxy|1.564|30.66|G|b|A face-on spiral about 3 million light-years away.
+M34|M34|2.702|42.78|OC|b
+M35|M35|6.148|24.33|OC|b
+M36|Pinwheel Cluster|5.602|34.13|OC|b
+M37|M37|5.873|32.55|OC|b
+M38|Starfish Cluster|5.478|35.85|OC|b
+M39|M39|21.535|48.43|OC|b
+M40|Winnecke 4|12.371|58.08|DS|t
+M41|M41|6.767|-20.72|OC|b
+M42|Orion Nebula|5.588|-5.39|N|e|A glowing cloud where stars are being born, in Orion’s sword.
+M43|De Mairan’s Nebula|5.593|-5.27|N|t
+M44|Beehive Cluster|8.670|19.67|OC|e|An open cluster in Cancer, a misty patch to the eye.
+M45|Pleiades|3.790|24.12|OC|e|The Seven Sisters: a young star cluster. Most people see six.
+M46|M46|7.697|-14.82|OC|b
+M47|M47|7.610|-14.50|OC|b
+M48|M48|8.230|-5.80|OC|b
+M49|M49|12.497|8.00|G|t
+M50|M50|7.053|-8.33|OC|b
+M51|Whirlpool Galaxy|13.498|47.20|G|t|A spiral galaxy tugging on a smaller neighbor, near the end of the Big Dipper’s handle.
+M52|M52|23.413|61.58|OC|b
+M53|M53|13.215|18.17|GC|t
+M54|M54|18.918|-30.48|GC|t
+M55|M55|19.667|-30.97|GC|b
+M56|M56|19.277|30.18|GC|t
+M57|Ring Nebula|18.893|33.03|PN|t|A smoke ring of gas from a dying star, between Sheliak and Sulafat in Lyra.
+M58|M58|12.629|11.82|G|t
+M59|M59|12.700|11.65|G|t
+M60|M60|12.728|11.55|G|t
+M61|M61|12.365|4.47|G|t
+M62|M62|17.020|-30.12|GC|t
+M63|Sunflower Galaxy|13.264|42.03|G|t
+M64|Black Eye Galaxy|12.945|21.68|G|t
+M65|M65|11.315|13.09|G|t|Part of the Leo Triplet of galaxies.
+M66|M66|11.337|12.99|G|t|Part of the Leo Triplet of galaxies.
+M67|M67|8.855|11.82|OC|b
+M68|M68|12.658|-26.75|GC|t
+M69|M69|18.523|-32.35|GC|t
+M70|M70|18.720|-32.30|GC|t
+M71|M71|19.896|18.78|GC|t
+M72|M72|20.891|-12.54|GC|t
+M73|M73|20.983|-12.63|AS|t
+M74|Phantom Galaxy|1.611|15.78|G|t
+M75|M75|20.101|-21.92|GC|t
+M76|Little Dumbbell Nebula|1.705|51.58|PN|t
+M77|Cetus A|2.711|-0.01|G|t
+M78|M78|5.779|0.05|N|t
+M79|M79|5.407|-24.52|GC|t
+M80|M80|16.284|-22.98|GC|t
+M81|Bode’s Galaxy|9.926|69.07|G|b|A bright spiral 12 million light-years away; binoculars catch it with M82.
+M82|Cigar Galaxy|9.931|69.68|G|b|A galaxy bursting with new stars, beside M81.
+M83|Southern Pinwheel Galaxy|13.617|-29.87|G|t
+M84|M84|12.418|12.89|G|t
+M85|M85|12.423|18.19|G|t
+M86|M86|12.437|12.95|G|t
+M87|Virgo A|12.514|12.39|G|t|A giant galaxy whose central black hole was the first ever imaged.
+M88|M88|12.533|14.42|G|t
+M89|M89|12.594|12.56|G|t
+M90|M90|12.614|13.16|G|t
+M91|M91|12.590|14.50|G|t
+M92|M92|17.285|43.14|GC|b
+M93|M93|7.743|-23.87|OC|b
+M94|Croc’s Eye Galaxy|12.848|41.12|G|t
+M95|M95|10.732|11.70|G|t
+M96|M96|10.780|11.82|G|t
+M97|Owl Nebula|11.248|55.02|PN|t
+M98|M98|12.230|14.90|G|t
+M99|M99|12.314|14.42|G|t
+M100|M100|12.382|15.82|G|t
+M101|Pinwheel Galaxy|14.053|54.35|G|t|A big face-on spiral above the Big Dipper’s handle.
+M102|Spindle Galaxy|15.108|55.76|G|t
+M103|M103|1.555|60.70|OC|b
+M104|Sombrero Galaxy|12.666|-11.62|G|t|An edge-on galaxy with a dark dust lane like a hat brim.
+M105|M105|10.797|12.58|G|t
+M106|M106|12.316|47.30|G|t
+M107|M107|16.542|-13.05|GC|t
+M108|Surfboard Galaxy|11.193|55.67|G|t
+M109|M109|11.960|53.37|G|t
+M110|M110|0.673|41.69|G|t|A companion galaxy of Andromeda.
+NGC 869/884|Double Cluster|2.330|57.13|OC|e|Two rich star clusters side by side, lovely in binoculars.
+Mel 25|Hyades|4.450|15.87|OC|e|The V-shaped cluster forming the Bull’s face, about 150 light-years away.
+Mel 111|Coma Star Cluster|12.420|26.00|OC|e
+Cr 399|Coathanger|19.430|20.18|AS|b|A little upside-down coat hanger of stars.
+Kemble 1|Kemble’s Cascade|3.950|62.50|AS|b
+NGC 7000|North America Nebula|20.980|44.33|N|b|Shaped like the continent, next to Deneb.
+NGC 6960|Veil Nebula|20.760|30.72|SNR|t|Lacy remains of a star that exploded thousands of years ago.
+NGC 7293|Helix Nebula|22.494|-20.84|PN|t
+NGC 6543|Cat’s Eye Nebula|17.976|66.63|PN|t
+B33|Horsehead Nebula|5.683|-2.46|N|t
+NGC 2237|Rosette Nebula|6.530|5.00|N|t
+NGC 2392|Eskimo Nebula|7.486|20.91|PN|t
+NGC 253|Sculptor Galaxy|0.793|-25.29|G|b
+NGC 5139|Omega Centauri|13.447|-47.48|GC|e|The biggest globular cluster in our galaxy. It barely clears the horizon from Siren, if at all.
+LMC|Large Magellanic Cloud|5.392|-69.76|G|e|A satellite galaxy of the Milky Way, only visible from the Southern Hemisphere.
+SMC|Small Magellanic Cloud|0.877|-72.83|G|e|A satellite galaxy of the Milky Way, only visible from the Southern Hemisphere.
+Sgr A*|Galactic Center|17.761|-29.01|BH|t|The heart of the Milky Way and its 4-million-Sun black hole, 26,000 light-years away behind dust.
+NGC 7635|Bubble Nebula|23.347|61.20|N|t
+IC 1805|Heart Nebula|2.550|61.45|N|t
+NGC 457|Owl Cluster|1.320|58.29|OC|b
+NGC 7662|Blue Snowball Nebula|23.430|42.54|PN|t
+NGC 7009|Saturn Nebula|21.070|-11.36|PN|t
+NGC 4631|Whale Galaxy|12.700|32.54|G|t
+NGC 4565|Needle Galaxy|12.606|25.99|G|t
+NGC 7317|Stephan’s Quintet|22.600|33.96|G|t
+IC 5146|Cocoon Nebula|21.890|47.27|N|t
+NGC 1499|California Nebula|4.000|36.62|N|t
+NGC 3242|Ghost of Jupiter|10.410|-18.64|PN|t
+NGC 7023|Iris Nebula|21.030|68.17|N|t
+IC 1396|Elephant’s Trunk Nebula|21.650|57.50|N|t
+NGC 2264|Christmas Tree Cluster|6.680|9.90|OC|b`;
+const DTYPE={G:'Galaxy',GC:'Globular cluster',OC:'Open star cluster',N:'Nebula',PN:'Planetary nebula',SNR:'Supernova remnant',DS:'Double star',SC:'Star cloud',AS:'Asterism',BH:'Black hole'};
+const DEYE={e:'visible to the eye from a dark site',b:'binoculars',t:'needs a telescope'};
+const DSO=DSO_TXT.split('\n').map(l=>{const p=l.split('|');return [p[1],p[0],+p[2],+p[3],p[4],p[5],p[6]||''];});
+const PCOL={Mercury:'#d8c6ad',Venus:'#fff3cf',Mars:'#ff8a5e',Jupiter:'#f6dfb8',Saturn:'#ecd59b',Uranus:'#a9e7ea',Neptune:'#8eabff'};
+const GR={a:'α',b:'β',g:'γ',d:'δ',e:'ε',z:'ζ',h:'η',q:'θ',i:'ι',k:'κ',l:'λ',m:'μ',n:'ν',x:'ξ',o:'ο',p:'π',r:'ρ',s:'σ',t:'τ',u:'υ',f:'φ',c:'χ',y:'ψ',w:'ω'};
+
+const STARS=[], SK={};
+for(const line of STAR_TXT.split('\n')){
+  const p=line.trim().split(/\s+/);
+  const s={k:p[0],c:p[0].split('_')[0],ra:+p[1]*15,dec:+p[2],mag:+p[3],bv:+p[4],name:p.slice(5).join(' ')};
+  s.cd=cosd(s.dec);s.sd=sind(s.dec);
+  STARS.push(s);SK[s.k]=s;
+}
+const SEGS=[];
+for(const [ab,,str] of CONS){
+  for(const seg of str.split(' ')){
+    const [x,y]=seg.split('-').map(q=>q.includes('_')?q:ab+'_'+q);
+    if(SK[x]&&SK[y])SEGS.push([SK[x],SK[y],ab]);else console.warn('missing',ab,seg);
+  }
+}
+function desig(k){const [c,l]=k.split('_');const m=l.match(/^([a-z])(\d*)$/);if(m)return GR[m[1]]+(m[2]?'<sup>'+m[2]+'</sup>':'')+' '+c;if(/^\d+$/.test(l))return l+' '+c;return '';}
+const GW={a:'alpha',b:'beta',g:'gamma',d:'delta',e:'epsilon',z:'zeta',h:'eta',q:'theta',i:'iota',k:'kappa',l:'lambda',m:'mu',n:'nu',x:'xi',o:'omicron',p:'pi',r:'rho',s:'sigma',t:'tau',u:'upsilon',f:'phi',c:'chi',y:'psi',w:'omega'};
+function bvRGB(bv){
+  const T=[[-0.3,[160,182,255]],[0,[212,224,255]],[0.3,[242,244,255]],[0.6,[255,244,226]],[1.0,[255,221,178]],[1.5,[255,194,140]],[2.0,[255,168,112]]];
+  if(bv<=T[0][0])return T[0][1];
+  for(let i=1;i<T.length;i++)if(bv<=T[i][0]){const f=(bv-T[i-1][0])/(T[i][0]-T[i-1][0]);return T[i][1].map((v,j)=>Math.round(T[i-1][1][j]+(v-T[i-1][1][j])*f));}
+  return T[T.length-1][1];
+}
+STARS.forEach(s=>s.rgb=bvRGB(s.bv).join(','));
+
+// ---------- Milky Way, faint texture, treeline (seeded) ----------
+let seed=20261123;
+const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+const gauss=()=>Math.sqrt(-2*Math.log(rnd()+1e-9))*Math.cos(2*Math.PI*rnd());
+function galToEq(l,b){
+  const aG=192.85948,dG=27.12825,lN=122.93192;
+  const sd=sind(dG)*sind(b)+cosd(dG)*cosd(b)*cosd(lN-l);
+  const ra=aG+atan2d(cosd(b)*sind(lN-l),cosd(dG)*sind(b)-sind(dG)*cosd(b)*cosd(lN-l));
+  return {ra:rev(ra),dec:Math.asin(clamp(sd,-1,1))*R2D};
+}
+const MW=[];
+for(let l=0;l<360;l+=2.5){
+  const ll=l>180?l-360:l;
+  const I=0.3+0.75*Math.exp(-((ll/45)**2))+0.3*Math.exp(-(((l-78)/22)**2));
+  const sg=5+5*Math.exp(-((ll/35)**2));
+  for(let b=-16;b<=16;b+=3){
+    let w=I*Math.exp(-0.5*((b-0.5)/sg)**2);
+    if(l>15&&l<75&&b>-1&&b<6)w*=0.5;
+    if(w<0.05)continue;
+    const q=galToEq(l+(rnd()-0.5)*2,b+(rnd()-0.5)*2);
+    MW.push([q.ra,q.dec,w,4.5+rnd()*3]);
+  }
+}
+const FAINT=[];
+for(let i=0;i<1500;i++){
+  let ra,dec;
+  if(rnd()<0.6){const q=galToEq(rnd()*360,gauss()*9);ra=q.ra;dec=q.dec;}
+  else{ra=rnd()*360;dec=Math.asin(2*rnd()-1)*R2D;}
+  FAINT.push([ra,dec,5.3+rnd()*1.3]);
+}
+const TN=1440, TREE=new Float32Array(TN);
+for(let i=0;i<TN;i++){const az=i/4;TREE[i]=0.35+0.22*Math.sin(az*D2R*3+1)+0.12*Math.sin(az*D2R*8+2);}
+const inLake=az=>az>248&&az<302;
+for(let n=0;n<1100;n++){
+  const az=rnd()*360, lake=inLake(az);
+  const h=lake?0.35+rnd()*0.55:1.0+rnd()*2.8+(rnd()<0.08?1.2:0);
+  const half=h*0.2+0.12+rnd()*0.12;
+  for(let j=Math.floor((az-half)*4);j<=Math.ceil((az+half)*4);j++){
+    const idx=((j%TN)+TN)%TN, dd=Math.abs(j/4-az)/half;
+    if(dd>1)continue;
+    const tier=1-0.07*((Math.floor((1-dd)*h*6))%2);
+    const v=(lake?0.15:0.25)+h*(1-dd)*tier;
+    if(v>TREE[idx])TREE[idx]=v;
+  }
+}
+for(let i=0;i<TN;i++)if(inLake(i/4))TREE[i]=Math.min(TREE[i],0.25+TREE[i]*0.4);
+
+const TLE_TXT=`ATLAS CENTAUR 2
+1 00694U 63047A   26327.76863841  .00001005  00000+0  10729-3 0  9999
+2 00694  30.3541 186.6922 0544140 205.3087 151.9894 14.12961905168284
+THOR AGENA D R/B
+1 00733U 64002A   26327.51139227  .00000146  00000+0  69241-4 0  9991
+2 00733  99.1047 354.7669 0032166 223.4936 136.3709 14.34117676275397
+SL-3 R/B
+1 00877U 64053B   26327.29251457  .00000054  00000+0  34773-4 0  9991
+2 00877  65.0770 292.9808 0070803 209.5194 150.1901 14.61498045304584
+SL-8 R/B
+1 02802U 67045B   26327.10277025  .00000138  00000+0  45890-4 0  9999
+2 02802  74.0111 225.4228 0064049 171.6284 188.5959 14.45744224126365
+SL-8 R/B
+1 03230U 68040B   26327.47573714  .00001295  00000+0  95014-4 0  9993
+2 03230  74.0280 144.3434 0025026 255.1288 104.7129 15.04517845128915
+OAO 2
+1 03597U 68110A   26327.82207116  .00000131  00000+0  40279-4 0  9997
+2 03597  34.9938 258.2989 0005026 120.5089 239.6098 14.47404033 56663
+ISIS 1
+1 03669U 69009A   26327.41139539  .00000055  00000+0  41961-4 0  9997
+2 03669  88.4303 126.8617 1706027 286.7686  55.3578 11.30460048377769
+SERT 2
+1 04327U 70009A   26327.25444031 -.00000020  00000+0  29108-4 0  9991
+2 04327  99.2978 256.4923 0004205 218.9139 300.1410 13.58751374815004
+SL-3 R/B
+1 05118U 71028B   26327.80894308  .00176599  11196-4  39827-3 0  9994
+2 05118  81.2196  85.5181 0005272  15.4411 344.7022 15.97544729 29448
+ASTEX 1
+1 05560U 71089A   26327.66222515  .00000310  00000+0  78729-4 0  9990
+2 05560  92.7200 235.3756 0013370 293.5069  66.4732 14.50961340899857
+SL-8 R/B
+1 05730U 71119B   26327.70073259  .00003924  00000+0  19974-3 0  9997
+2 05730  73.8876  50.1253 0536931 323.1389  33.3943 14.41197577692769
+OAO 3 (COPERNICUS)
+1 06153U 72065A   26327.83403740  .00000191  00000+0  43418-4 0  9998
+2 06153  35.0062 260.6885 0006109 125.3826 263.3928 14.60137409884098
+ATLAS CENTAUR R/B
+1 06155U 72065B   26327.83187131  .00000685  00000+0  95602-4 0  9993
+2 06155  35.0010 226.4485 0032775  31.3314 328.9332 14.78169277879622
+SL-8 R/B
+1 08459U 75112B   26326.76717020  .00000127  00000+0  50282-4 0  9991
+2 08459  74.0607 264.1173 0016791 288.6735  71.2596 14.38300351668973
+SL-3 R/B
+1 10114U 77057B   26327.80230294  .00008732  00000+0  15136-3 0  9999
+2 10114  97.5852 152.5271 0007867  71.7262 288.4845 15.51120156708428
+SEASAT 1
+1 10967U 78064A   26327.39099838  .00000173  00000+0  86586-4 0  9994
+2 10967 108.0174 308.4571 0002527 266.8533  93.2323 14.46337955543914
+SL-14 R/B
+1 11267U 79011B   26327.65025309  .00000323  00000+0  29215-4 0  9995
+2 11267  82.5252 210.8170 0014343 272.7414  87.2164 14.92135190567397
+SL-8 R/B
+1 11574U 79089B   26327.02893494  .00000108  00000+0  40525-4 0  9998
+2 11574  74.0688 332.7988 0014351  77.5416 282.7345 14.42461863473359
+SL-14 R/B
+1 11672U 80005B   26327.63283146  .00000321  00000+0  29699-4 0  9997
+2 11672  82.5154  61.5738 0016201  24.9347 335.2651 14.91149729515073
+SL-8 R/B
+1 12139U 81003B   26327.65140942  .00011693  00000+0  26116-3 0  9997
+2 12139  82.9371  48.9715 0231200 351.9775   7.7783 15.19839438353898
+SL-3 R/B
+1 12465U 81046B   26327.82530856  .00007125  00000+0  13823-3 0  9998
+2 12465  81.2284 337.2845 0016476 186.8232 173.2792 15.47325638478432
+SL-3 R/B
+1 12904U 81103B   26327.78990642  .00003075  00000+0  12793-3 0  9993
+2 12904  81.1576 268.9512 0013741 126.8102 233.4393 15.23379505 12667
+SL-3 R/B
+1 13068U 82013B   26327.78316373  .00002491  00000+0  10189-3 0  9997
+2 13068  81.1745 216.5967 0022311  27.1394 333.0999 15.23734975443785
+SL-3 R/B
+1 13154U 82039B   26327.84084888  .00000997  00000+0  57273-4 0  9996
+2 13154  81.1489 276.5927 0031362 180.0384 180.0846 15.11183448420766
+SL-3 R/B
+1 13403U 82079B   26327.74094845  .00003531  00000+0  13102-3 0  9999
+2 13403  81.1461 246.5723 0023781  10.8019 349.3721 15.27044056417200
+SL-14 R/B
+1 13553U 82092B   26327.30256632  .00000272  00000+0  27551-4 0  9999
+2 13553  82.5678 259.3990 0020775 158.8499 355.6647 14.86843790367357
+SL-3 R/B
+1 13819U 83010B   26327.65313014  .00009872  00000+0  15525-3 0  9993
+2 13819  81.1023  42.9818 0013462 213.2707 146.7697 15.53349915398059
+SL-3 R/B
+1 14208U 83075B   26327.78502106  .00006940  00000+0  15695-3 0  9994
+2 14208  97.6062 343.1263 0020012  24.4646 335.7546 15.43295901370057
+COSMOS 1536
+1 14699U 84013A   26327.58702813  .00003233  00000+0  12160-3 0  9992
+2 14699  82.5448 209.8976 0015439  89.5479 270.7529 15.26658381312088
+SL-14 R/B
+1 14820U 84027B   26327.52161435  .00000252  00000+0  25857-4 0  9992
+2 14820  82.5422   2.2645 0017568 191.2536 168.8290 14.86151739286075
+SL-8 R/B
+1 15483U 85006B   26326.87091594  .00000197  00000+0  74014-4 0  9998
+2 15483  74.0435 146.0404 0018482 353.7018 139.4357 14.37892239191130
+SL-12 R/B(2)
+1 15772U 85042D   26327.22855316  .00000021  00000+0  30697-4 0  9994
+2 15772  71.1080 261.4898 0032771  82.6698  74.7053 14.22033694151140
+SL-14 R/B
+1 15945U 85069B   26327.69616437  .00000252  00000+0  25520-4 0  9990
+2 15945  82.5251 141.3586 0020000  56.8466 303.4666 14.86608684211311
+SL-16 R/B
+1 16182U 85097B   26327.44484441 -.00000105  00000+0 -28481-4 0  9994
+2 16182  71.0029 315.7862 0009332 233.7703 281.6375 14.16629157123878
+SL-14 R/B
+1 16496U 86006B   26327.59850237  .00000324  00000+0  31214-4 0  9998
+2 16496  82.5281  16.0679 0077310 133.3416 227.4279 14.87075342187686
+COSMOS 1743
+1 16719U 86034A   26327.44258807  .00115589  35325-5  38237-3 0  9991
+2 16719  82.5168 157.0407 0003887  40.0700 320.0858 15.90264622220879
+SL-14 R/B
+1 16792U 86046B   26327.36629734  .00000240  00000+0  24588-4 0  9995
+2 16792  82.4827 195.7682 0024597  92.6902 267.7130 14.85764234164811
+SL-14 R/B
+1 16882U 86055B   26327.50875537  .00000259  00000+0  26864-4 0  9994
+2 16882  82.5210 243.3309 0018400 191.0144 342.4751 14.85819714157795
+AJISAI (EGS)
+1 16908U 86061A   26327.72482594 -.00000088  00000+0  67763-4 0  9995
+2 16908  50.0115  16.8191 0011299 226.1177 291.5137 12.44517698500259
+SL-14 R/B
+1 17567U 87024B   26327.64225366  .00000234  00000+0  23729-4 0  9996
+2 17567  82.5294 209.3732 0019491 120.4891 239.8254 14.86307920126599
+COSMOS 1833
+1 17589U 87027A   26326.53542404  .00000315  00000+0  19374-3 0  9995
+2 17589  70.9160 144.0221 0023438 179.4557 180.6594 14.13054007 46746
+SL-16 R/B
+1 17590U 87027B   26327.38238483  .00000157  00000+0  10141-3 0  9997
+2 17590  71.0025  91.3544 0002758  82.7924 277.3513 14.17190000 51994
+SL-14 R/B
+1 17912U 87038B   26327.70350230  .00000230  00000+0  23760-4 0  9992
+2 17912  82.5027  52.7973 0019937  32.3587 327.8847 14.85538627117687
+COSMOS 1844
+1 17973U 87041A   26327.07016196  .00000339  00000+0  20043-3 0  9993
+2 17973  70.8987 209.1631 0031136 350.5021   9.5508 14.14598065 40127
+SL-14 R/B
+1 18153U 87055B   26327.36529742  .00000300  00000+0  31626-4 0  9995
+2 18153  82.4978 105.1739 0019328 235.7728 124.1658 14.85798938108346
+COSMOS 1867
+1 18187U 87060A   26326.85645927 -.00000051  00000+0  18632-4 0  9991
+2 18187  65.0107 303.6890 0019802 278.2272  81.6567 14.31530532 56893
+SL-14 R/B
+1 18749U 88001B   26327.44551536  .00000273  00000+0  28585-4 0  9992
+2 18749  82.5113 311.9159 0019592 101.5576 258.7842 14.85697586 80442
+COSMOS 1933
+1 18958U 88020A   26327.50339551  .00002250  00000+0  10419-3 0  9996
+2 18958  82.5127 354.5358 0004774  39.5504 320.6078 15.19613383 89518
+SL-3 R/B
+1 19046U 88032B   26327.80423645  .00002849  00000+0  12692-3 0  9998
+2 19046  97.5430 310.9776 0026368  52.0607 308.3006 15.21978596 91494
+SL-16 R/B
+1 19120U 88039B   26327.15288956  .00000098  00000+0  68923-4 0  9993
+2 19120  71.0147 242.0151 0023870 300.2925  59.5838 14.19646110995061
+COSMOS 1953
+1 19210U 88050A   26327.23826374  .00006348  00000+0  20414-3 0  9993
+2 19210  82.5067 257.3968 0008086 295.1762  64.8640 15.32022089 77326
+SL-8 R/B
+1 19257U 88053B   26327.35917573  .00000157  00000+0  59239-4 0  9992
+2 19257  74.0480 355.6358 0018780 113.4217   6.3945 14.39023819 13693
+COSMOS 1975
+1 19573U 88093A   26327.64425257  .00004751  00000+0  15616-3 0  9996
+2 19573  82.5199 217.0871 0010407 345.5339  14.5603 15.31238353 58995
+SL-14 R/B
+1 19574U 88093B   26327.54019463  .00000251  00000+0  26043-4 0  9992
+2 19574  82.5299 159.0480 0019082 260.8765 127.7142 14.85830336 39450
+SL-16 R/B
+1 19650U 88102B   26327.00228444 -.00000224  00000+0 -88836-4 0  9990
+2 19650  70.9994 327.9686 0015416 328.7434  31.2771 14.16179854963465
+INTERCOSMOS 24
+1 20261U 89080A   26327.33890877  .00000506  00000+0  14078-3 0  9994
+2 20261  82.6033 296.0515 1187593  52.4995 317.8212 12.59788090699367
+SL-14 R/B
+1 20262U 89080C   26327.52691581  .00000191  00000+0  57032-4 0  9995
+2 20262  82.5957   6.9459 1228672 313.1081  37.3348 12.50625747692507
+DELTA 1 R/B
+1 20323U 89089B   26327.74815052  .00000151  00000+0  45915-4 0  9990
+2 20323  97.0675 133.8457 0069319  24.8602 335.5909 14.50816987933296
+ARIANE 40 R/B
+1 20443U 90005H   26327.16944943  .00000138  00000+0  56978-4 0  9997
+2 20443  98.2759  19.6731 0010890 141.9903 218.2057 14.39990479930009
+COSMOS 2058
+1 20465U 90010A   26327.71815766  .00002234  00000+0  12546-3 0  9999
+2 20465  82.4663 151.9482 0009918 154.2126 205.9601 15.12807842981386
+SL-14 R/B
+1 20466U 90010B   26327.66639575  .00000226  00000+0  24364-4 0  9997
+2 20466  82.5038  24.1431 0020226 161.9689 198.2248 14.83732307966882
+SL-14 R/B
+1 20511U 90018B   26327.39353366  .00000254  00000+0  28797-4 0  9992
+2 20511  82.5207 341.2667 0015133 325.4095  34.6133 14.82300840960909
+HST
+1 20580U 90037B   26327.65764941  .00004502  00000+0  13248-3 0  9997
+2 20580  28.4730  69.3048 0002513 119.0345 241.0503 15.32403853813040
+SL-16 R/B
+1 20625U 90046B   26327.35600036 -.00000121  00000+0 -37576-4 0  9994
+2 20625  70.9984 114.6519 0016706 271.6056  88.3153 14.15042886884982
+COSMOS 2084
+1 20663U 90055A   26327.57634832  .00001042  00000+0  83216-4 0  9994
+2 20663  62.7873 171.8285 0028372   2.6467 357.4778 15.06699596975313
+SL-6 R/B(2)
+1 20666U 90055D   26327.72490670  .00000910  00000+0  76607-4 0  9993
+2 20666  62.7809  92.2529 0065014  24.5497 335.8674 15.04516334977157
+SL-8 R/B
+1 20775U 90078B   26327.53030063  .00011210  00000+0  30507-3 0  9997
+2 20775  82.9023  17.1082 0332757 217.1509 140.6274 14.96616706847928
+SL-8 R/B
+1 21088U 91006B   26327.05456285  .00000139  00000+0  12392-3 0  9992
+2 21088  82.9417 337.8304 0023189  34.4622 349.6780 13.77532002799646
+OKEAN-3
+1 21397U 91039A   26327.70725784  .00001238  00000+0  82935-4 0  9998
+2 21397  82.5163  85.6242 0014823 161.7855 198.3906 15.05959139904003
+COSMOS 2151
+1 21422U 91042A   26327.75993868  .00000825  00000+0  62801-4 0  9997
+2 21422  82.4971 193.6520 0010604 263.0746  96.9272 15.00816312902046
+SL-14 R/B
+1 21423U 91042B   26327.36666685  .00000227  00000+0  25616-4 0  9998
+2 21423  82.4922 337.5915 0018477 109.3219 250.9995 14.81980334891385
+ERS-1
+1 21574U 91050A   26327.54100932  .00000207  00000+0  80707-4 0  9992
+2 21574  98.7693 352.0651 0032375 152.4706 207.8204 14.39603279852978
+ARIANE 40 R/B
+1 21610U 91050F   26327.53275714  .00000227  00000+0  80204-4 0  9997
+2 21610  98.1679   9.5822 0003405  30.2380 329.9007 14.43039835856320
+INTERCOSMOS 25
+1 21819U 91086A   26327.55254779  .00000851  00000+0  16836-3 0  9999
+2 21819  82.6026 153.4151 1483538 278.6087  65.0214 12.12510233528055
+SL-8 R/B
+1 21876U 92008B   26327.29487534  .00000022  00000+0  69012-5 0  9991
+2 21876  82.9272  75.4743 0035754 131.1285 258.4145 13.75991663744982
+SL-8 R/B
+1 21938U 92020B   26326.91251497 -.00000022  00000+0 -38246-4 0  9995
+2 21938  82.9283 321.9513 0027825 298.3347 106.9934 13.75560558736633
+USA 81
+1 21949U 92023A   26327.47531198  .00000127  00000+0  39571-4 0  9997
+2 21949  85.0070 342.0727 0001262  79.1562 280.9773 14.32433211131839
+COSMOS 2219
+1 22219U 92076A   26327.63193578 -.00000200  00000+0 -80410-4 0  9992
+2 22219  71.0588 196.7463 0017709 171.8683 188.2730 14.14114903754981
+SL-16 R/B
+1 22220U 92076B   26327.08203600  .00000247  00000+0  14689-3 0  9994
+2 22220  71.0009   4.0609 0010814  54.7608 332.4694 14.16888857758434
+COSMOS 2221
+1 22236U 92080A   26327.51964774  .00000940  00000+0  79356-4 0  9993
+2 22236  82.5050  31.0488 0015100  46.7165 313.5314 14.96928090819508
+SL-16 R/B
+1 22285U 92093B   26327.03568521 -.00000193  00000+0 -74161-4 0  9999
+2 22285  71.0205 181.9113 0006722 272.8238  87.2115 14.15482391749719
+COSMOS 2228
+1 22286U 92094A   26327.82115001  .00001047  00000+0  86097-4 0  9997
+2 22286  82.5176 349.0629 0018598 144.4039 215.8429 14.98023672814848
+SL-16 R/B
+1 22566U 93016B   26327.66872694 -.00000126  00000+0 -39952-4 0  9990
+2 22566  71.0085  31.2412 0012561 285.4595  74.5140 14.15327342738810
+COSMOS 2242
+1 22626U 93024A   26327.58761441  .00000928  00000+0  77533-4 0  9999
+2 22626  82.5196  18.9720 0016854 149.0647 211.1572 14.97315809819120
+SL-16 R/B
+1 22803U 93059B   26327.36536973  .00000239  00000+0  14177-3 0  9999
+2 22803  70.9890 185.6120 0017127 183.6770 176.4230 14.17264598716186
+ARIANE 40 R/B
+1 22830U 93061H   26327.41089141  .00000109  00000+0  55433-4 0  9995
+2 22830  98.4641  30.8073 0009846 234.0133 126.0139 14.32959902731156
+COSMOS 2278
+1 23087U 94023A   26326.38204256 -.00000152  00000+0 -54826-4 0  9995
+2 23087  71.0548 355.9376 0009696 338.3946  21.6766 14.14419264681246
+SL-16 R/B
+1 23088U 94023B   26327.16176827 -.00000011  00000+0  18770-4 0  9996
+2 23088  71.0006 248.0596 0005743 267.7199  92.3266 14.15042626682657
+SL-16 R/B
+1 23343U 94074B   26327.63313272  .00000232  00000+0  37477-4 0  9994
+2 23343  97.6880 347.6268 0008064  96.4657  51.7022 14.79612846725533
+SL-16 R/B
+1 23405U 94077B   26326.97212621  .00000142  00000+0  97229-4 0  9999
+2 23405  70.9807 169.0968 0001845 188.9568 171.1522 14.15585107652783
+ARIANE 40+ R/B
+1 23561U 95021B   26327.45686204  .00000220  00000+0  83670-4 0  9990
+2 23561  98.4251  35.0916 0007871  88.1423 282.5942 14.39908452656487
+SL-16 R/B
+1 23705U 95058B   26327.06216760  .00000258  00000+0  15610-3 0  9992
+2 23705  71.0219 357.7935 0010303  84.7569 275.4729 14.15520152604411
+SL-16 R/B
+1 24298U 96051B   26327.08910489  .00000134  00000+0  98702-4 0  9992
+2 24298  70.7733 348.4225 0013735 125.5868 234.6534 14.12503827558138
+ORBVIEW 2 (SEASTAR)
+1 24883U 97037A   26326.23349948  .00000169  00000+0  74832-4 0  9995
+2 24883  98.8793 137.7910 0002737  42.5839 317.5557 14.35619873545429
+SL-16 R/B
+1 25400U 98043G   26327.70058363  .00000011  00000+0  23500-4 0  9992
+2 25400  98.8605 283.4009 0009650 350.1950   9.9040 14.26091840475900
+SL-16 R/B
+1 25407U 98045B   26327.01677480 -.00000239  00000+0 -96547-4 0  9997
+2 25407  71.0118 358.3052 0008313 333.8915  26.1788 14.16218292463675
+ISS (ZARYA)
+1 25544U 98067A   26327.46150417  .00006075  00000+0  11604-3 0  9990
+2 25544  51.6319 231.8873 0007454  57.2278 302.9428 15.49562644596442
+CZ-4B R/B
+1 25732U 99025C   26327.59212649  .00000034  00000+0  36957-4 0  9992
+2 25732  98.6295   5.2661 0036360 321.0953 190.9662 14.18304748424868
+OKEAN-O
+1 25860U 99039A   26327.50763213  .00000324  00000+0  48999-4 0  9999
+2 25860  97.9114  24.3041 0001194 114.0165 246.1172 14.80620929472682
+SL-16 R/B
+1 25861U 99039B   26327.72006303  .00000260  00000+0  39526-4 0  9999
+2 25861  97.9638  25.9521 0015788 132.8585 227.3957 14.81975779475224
+DELTA 2 R/B
+1 25876U 99041E   26327.62280988  .00000067  00000+0  51074-4 0  9997
+2 25876  51.7627 346.6167 0500492  32.8810 330.2235 14.12326168399613
+HELIOS 1B
+1 25977U 99064A   26327.66504255  .00000794  00000+0  92089-4 0  9992
+2 25977  98.1535 237.3368 0000765  37.9245 322.2024 14.88357493723776
+TERRA
+1 25994U 99068A   26327.78285860  .00000219  00000+0  53455-4 0  9992
+2 25994  97.9251  10.8316 0003626  89.4762 339.4122 14.61203831432918
+SL-16 R/B
+1 26070U 00006B   26327.24035192  .00000132  00000+0  91068-4 0  9990
+2 26070  71.0026 274.1806 0015411 155.4072 204.7789 14.15854823385157
+TITAN 4B R/B
+1 26474U 00047B   26327.76887037  .00001685  00000+0  10760-3 0  9996
+2 26474  67.9880  31.1299 0035765 112.1881 248.3071 15.10950803432035
+ENVISAT
+1 27386U 02009A   26327.87935880  .00000035  00000+0  25311-4 0  9998
+2 27386  98.4057 275.7917 0001165  80.4337 296.5884 14.39097136296458
+IDEFIX & ARIANE 42P R/B
+1 27422U 02021B   26327.11773784  .00000125  00000+0  64029-4 0  9992
+2 27422  98.6096 262.9674 0012309 142.4458 217.7587 14.31145240280985
+AQUA
+1 27424U 02022A   26327.90134818  .00000451  00000+0  99203-4 0  9995
+2 27424  98.4502 300.5686 0001393 104.6887 283.5992 14.62293522306617
+CZ-4B R/B
+1 27432U 02024C   26327.61687638  .00000020  00000+0  32977-4 0  9994
+2 27432  98.8492  19.2316 0050206   8.4125 139.5244 14.14584210265848
+MIDORI II (ADEOS-II)
+1 27597U 02056A   26327.80772073  .00000152  00000+0  77514-4 0  9992
+2 27597  98.8117 288.6041 0001042  23.8903 336.2327 14.29421919247312
+H-2A R/B
+1 27601U 02056E   26327.10563784  .00000128  00000+0  58950-4 0  9994
+2 27601  98.3548 278.1581 0071134 111.5130 259.9262 14.33892766251142
+CZ-4B R/B
+1 28059U 03049C   26327.62097459  .00000182  00000+0  53295-4 0  9990
+2 28059  98.6947 332.8802 0048445 160.3042 200.0039 14.55192823224255
+SL-16 R/B
+1 28353U 04021B   26327.47444352  .00000181  00000+0  11873-3 0  9993
+2 28353  71.0023  49.3984 0005430 340.9649  19.1270 14.14627511159434
+CZ-4B R/B
+1 28415U 04035C   26327.08620387  .00004595  00000+0  14603-3 0  9995
+2 28415  97.3211 358.4508 0030832 126.2984 234.1113 15.32666845219447
+CZ-2C R/B
+1 28480U 04046B   26327.14299268  .00000080  00000+0  44124-4 0  9993
+2 28480  98.1824 225.8598 0140399 110.1882 251.4464 14.27068136145365
+ARIANE 5 R/B
+1 28499U 04049H   26327.49508123  .00000593  00000+0  71633-4 0  9991
+2 28499  98.2780 146.0500 0082574 231.7974 127.5784 14.85641421184219
+CZ-2D R/B
+1 28738U 05024B   26327.54287921  .00297577  41260-4  46418-3 0  9997
+2 28738  97.3172 357.6875 0004248 116.0455 244.1263 16.04068726180528
+ALOS (DAICHI)
+1 28931U 06002A   26326.59955466  .00000887  00000+0  15505-3 0  9990
+2 28931  98.1550 281.8763 0001268 116.2587 243.8750 14.70358127111375
+H-2A R/B
+1 28932U 06002B   26327.46291999  .00004269  00000+0  19504-3 0  9993
+2 28932  98.2679 138.1441 0049554  78.9220 281.7579 15.20112081133708
+RESURS-DK 1
+1 29228U 06021A   26326.19291125  .00001865  00000+0  10915-3 0  9999
+2 29228  69.9331 290.3661 0001274 359.8230   0.2936 15.13765540126485
+CZ-4B R/B
+1 29507U 06046C   26327.60874876  .00002548  00000+0  12383-3 0  9993
+2 29507  97.5256  11.6554 0033494  88.3375 272.1695 15.18871422 99322
+CZ-2C R/B
+1 31114U 07010B   26327.20205396  .00000046  00000+0  40504-4 0  9991
+2 31114  98.4183  67.8485 0057851 262.5456  96.9146 14.20308190 16403
+COSMO-SKYMED 1
+1 31598U 07023A   26327.84293822  .00001104  00000+0  99329-4 0  9997
+2 31598  97.8768 161.0899 0001717  78.9456 281.1959 14.97716590 53688
+COSMOS 2428
+1 31792U 07029A   26327.43109535 -.00000264  00000+0 -11592-3 0  9994
+2 31792  70.9398  20.1772 0011936 239.0697 120.9251 14.12956216   619
+SL-16 R/B
+1 31793U 07029B   26327.10471572  .00000315  00000+0  18805-3 0  9991
+2 31793  70.9763 349.1601 0002606 277.2358 105.1474 14.14871672  1924
+KORONAS-FOTON
+1 33504U 09003A   26327.48496138  .00006315  00000+0  11524-3 0  9990
+2 33504  82.4292   5.6416 0007658 301.9222  58.1283 15.49159182985735
+CZ-2C R/B
+1 37731U 11030B   26327.37363653  .00000623  00000+0  84251-4 0  9996
+2 37731  97.8886 280.0965 0050813 227.3037 284.8105 14.81762893828397
+H-2A R/B
+1 38341U 12025E   26327.00810869  .00001045  00000+0  96895-4 0  9991
+2 38341  98.5006 315.4853 0042984 185.1362 174.9422 14.96330426786830
+SHIJIAN-16 (SJ-16)
+1 39358U 13057A   26327.88189091  .00001295  00000+0  12740-3 0  9991
+2 39358  74.9738  54.1570 0016309 206.4952 153.5404 14.92916029710178
+SL-4 R/B
+1 39679U 14021B   26327.51388964  .00007167  00000+0  13698-3 0  9996
+2 39679  51.6025 148.2233 0082946 331.2532  28.3897 15.45633654696220
+ALOS-2
+1 39766U 14029A   26327.82035168  .00000731  00000+0  10470-3 0  9995
+2 39766  97.9239  62.7015 0001390  91.6237 268.5134 14.79469538675186
+YAOGAN-29
+1 41038U 15069A   26327.86914624  .00000015  00000+0  84757-5 0  9998
+2 41038  97.9904 356.6500 0001005 156.1852 203.9408 14.83188063594292
+ASTRO-H (HITOMI)
+1 41337U 16012A   26327.78340207  .00001816  00000+0  99989-4 0  9992
+2 41337  30.9975 122.9568 0009485  59.7067 300.4509 15.11145423591447
+HXMT (HUIYAN)
+1 42758U 17034A   26327.58617483  .00003052  00000+0  15009-3 0  9990
+2 42758  43.0151  14.6592 0030245  77.1341 283.2884 15.19688367521902
+SAOCOM 1A
+1 43641U 18076A   26327.79849419  .00000224  00000+0  34641-4 0  9990
+2 43641  97.8846 152.2581 0001324  84.3423 275.7941 14.82153234439745
+H-2A R/B
+1 43682U 18084L   26326.86762435  .00018823  00000+0  31395-3 0  9999
+2 43682  98.8427 241.0795 0018834 192.5178 167.5605 15.51859991445677
+SAOCOM 1B
+1 46265U 20059A   26327.82972485  .00000667  00000+0  90324-4 0  9994
+2 46265  97.8845 151.3882 0001419  83.5371 276.6004 14.82157921337138
+CSS (TIANHE)
+1 48274U 21035A   26327.77997630  .00012171  00000+0  15174-3 0  9996
+2 48274  41.4704  72.0861 0010100 281.0100  78.9602 15.59671015318098
+COSMOS 2550
+1 48865U 21056A   26323.54413259  .00000046  00000+0  72176-5 0  9991
+2 48865  67.1433 349.8842 0008296 268.9611  91.0593 15.33832603302548
+CZ-2C R/B
+1 52794U 22058K   26327.58571839  .00063701  00000+0  36303-3 0  9994
+2 52794  50.1823  45.9767 0020864 241.8360 118.0513 15.77965930250660
+CZ-2C R/B
+1 54039U 22132E   26327.84031907  .03346600  24682-5  49192-3 0  9990
+2 54039  97.2745 345.4982 0005819 210.7519 149.3438 16.34588175231253
+GSLV R/B
+1 54149U 22138AN  26325.81511682  .00001691  00000+0  14099-3 0  9991
+2 54149  87.3773  79.9364 0018880 298.8075  61.1261 14.97839698222403
+XRISM
+1 57800U 23137A   26327.57326068  .00002962  00000+0  15540-3 0  9999
+2 57800  31.0033  46.2317 0007593 134.1404 225.9860 15.13624663177022
+ACS3
+1 59588U 24077B   26327.39622656  .00030492  00000+0  19365-1 0  9996
+2 59588  97.2979 212.1698 0111834 354.8305   5.1701 14.00618960130277
+SPACEMOBILE-003
+1 61045U 24163A   26326.88872465  .00000491  00000+0  37196-4 0  9992
+2 61045  52.9748 299.9106 0003160 215.4229 144.6555 15.20149498121911
+SPACEMOBILE-005
+1 61046U 24163B   26327.33326846  .00009886  00000+0  46575-3 0  9998
+2 61046  52.9763 297.9075 0006567 226.5495 133.4953 15.20114936121977
+SPACEMOBILE-001
+1 61047U 24163C   26326.34584005  .00000733  00000+0  48345-4 0  9992
+2 61047  52.9734 302.0846 0004344 223.9005 136.1644 15.20094810121828
+SPACEMOBILE-002
+1 61048U 24163D   26326.33068041  .00015103  00000+0  70275-3 0  9992
+2 61048  52.9765 302.2554 0006053 211.8535 148.2094 15.20138332121825
+SPACEMOBILE-004
+1 61049U 24163E   26325.91875475 -.00009947  00000+0 -44041-3 0  9996
+2 61049  52.9737 303.8938 0005443 246.7911 113.2510 15.20091579121764
+BIOMASS
+1 63772U 25090A   26326.90626523  .00000599  00000+0  11547-3 0  9996
+2 63772  98.0722 151.9502 0001236  86.1964 273.9382 14.66985495 83961
+CZ-8A R/B
+1 66004U 25231K   26327.71350648 -.00000040  00000+0  45061-4 0  9997
+2 66004  50.0036  80.5754 0116523  66.2011 295.1071 14.30204753 57775
+SZ-21 MODULE
+1 66515U 25246C   26327.21893817  .00151726  16826-4  27998-3 0  9998
+2 66515  41.4671  23.7107 0011225  93.3632 266.8505 16.00360476 58980
+SPACEMOBILE-006
+1 67232U 25309A   26326.29619717  .00002236  00000+0  11999-3 0  9994
+2 67232  52.9978 327.0833 0009252 262.6293  97.3649 15.19199539 50629
+SPACEMOBILE-008
+1 69589U 26139A   26327.07975112  .00000356  00000+0  36754-4 0  9992
+2 69589  52.9952 261.0154 0005169  86.7024 273.4558 15.13128729 24030
+SPACEMOBILE-009
+1 69590U 26139B   26327.28833385  .00001951  00000+0  12591-3 0  9996
+2 69590  52.9933 260.1615 0005633  85.0093 275.1541 15.13054140 24066
+SPACEMOBILE-010
+1 69591U 26139C   26327.83144618  .00001569  00000+0  10479-3 0  9990
+2 69591  52.9941 257.8589 0005668  78.5040 281.6588 15.12990433 24152`;
+// ---------- satellites (SGP4 via satellite.js) ----------
+const SL=window.satellite;
+const OBS={longitude:LON*D2R,latitude:LAT*D2R,height:0.35};
+const SPECIAL={25544:['ISS','International Space Station',-3.5,'#ffffff'],48274:['Tiangong','Tiangong, China’s space station',-1.8,'#fff1ea'],20580:['Hubble','Hubble Space Telescope',1.8,'#eef3ff']};
+let SATS=[],SATEPOCH=0,passCache={};
+function tleOK(l){if(!l||l.length<69)return false;let s=0;for(let i=0;i<68;i++){const c=l[i];if(c>='0'&&c<='9')s+=+c;else if(c==='-')s++;}return s%10===+l[68];}
+const niceName=n=>n.replace(/\s+R\/B(\(\d\))?$/,' rocket body').replace(/\s+/g,' ').trim();
+function parseTLE(txt){
+  const L=String(txt).split(/\r?\n/).map(x=>x.replace(/\s+$/,'')),out=[],seen=new Set();
+  if(!SL)return out;
+  for(let i=0;i<L.length-1;i++){
+    if(!(L[i].startsWith('1 ')&&L[i+1].startsWith('2 ')))continue;
+    const l1=L[i],l2=L[i+1],nm=i>0&&L[i-1]&&!/^[12] /.test(L[i-1])?L[i-1].trim():'';i++;
+    if(!tleOK(l1)||!tleOK(l2))continue;
+    const id=+l1.slice(2,7);if(seen.has(id))continue;
+    let rec;try{rec=SL.twoline2satrec(l1,l2);}catch(e){continue;}
+    if(!rec||rec.error)continue;
+    const sp=SPECIAL[id],raw=niceName(nm||'Satellite '+id);seen.add(id);
+    out.push({id,rec,name:sp?sp[0]:raw,full:sp?sp[1]:raw,mag:sp?sp[2]:/rocket body/.test(raw)?3.2:3.8,col:sp?sp[3]:'#fff8ea',special:!!sp,epoch:(rec.jdsatepoch-2440587.5)*86400000});
+  }
+  return out;
+}
+function setSats(list){SATS=list;SATEPOCH=list.reduce((m,s)=>Math.max(m,s.epoch),0);passCache={};}
+function sunVecEq(t){const d=jdOf(t)-2451543.5,ws=282.9404+4.70935e-5*d,es=0.016709-1.151e-9*d,Ms=rev(356.047+0.9856002585*d);const E=kepler(Ms,es),x=cosd(E)-es,y=Math.sqrt(1-es*es)*sind(E);const q=eclToEq(rev(atan2d(y,x)+ws),0);return [cosd(q.dec)*cosd(q.ra),cosd(q.dec)*sind(q.ra),sind(q.dec)];}
+function satLook(s,t,sv,gm){
+  const date=new Date(t);let pv;try{pv=SL.propagate(s.rec,date);}catch(e){return null;}
+  const p=pv&&pv.position;if(!p||typeof p!=='object'||!isFinite(p.x))return null;
+  const g=gm==null?SL.gstime(date):gm,la=SL.ecfToLookAngles(OBS,SL.eciToEcf(p,g));
+  const dot=p.x*sv[0]+p.y*sv[1]+p.z*sv[2],r2=p.x*p.x+p.y*p.y+p.z*p.z;
+  return {el:la.elevation*R2D,az:rev(la.azimuth*R2D),range:la.rangeSat,lit:dot>0||r2-dot*dot>6371*6371,p,v:pv.velocity,g};
+}
+function sunAltAt(t){const S=st.ni.S,f=(t-st.night.noon)/600000,i=clamp(Math.floor(f),0,S.length-2),u=clamp(f-i,0,1);return S[i].sun*(1-u)+S[i+1].sun*u;}
+function passes(s){
+  const key=s.id+'|'+st.night.key;if(passCache[key])return passCache[key];
+  const out=[];let cur=null,sv=null,svT=-1e15;
+  for(let i=0;i<=2880;i++){
+    const t=st.night.noon+i*30000;if(t-svT>3600000){sv=sunVecEq(t);svT=t;}
+    const L=satLook(s,t,sv);if(!L)continue;
+    if(L.el>=10){if(!cur)cur={start:t,saz:L.az,max:L.el,tmax:t,maz:L.az,vis:false};if(L.el>cur.max){cur.max=L.el;cur.tmax=t;cur.maz=L.az;}if(L.lit&&sunAltAt(t)<-6)cur.vis=true;cur.end=t;cur.eaz=L.az;}
+    else if(cur){if(cur.vis)out.push(cur);cur=null;}
+  }
+  if(cur&&cur.vis)out.push(cur);
+  return passCache[key]=out;
+}
+setSats(parseTLE(TLE_TXT));
+try{const saved=localStorage.getItem('siren-tle');if(saved){const l=parseTLE(saved);if(l.length&&l.reduce((m,s)=>Math.max(m,s.epoch),0)>SATEPOCH)setSats(l);}}catch(e){}
+
+// ---------- time helpers ----------
+const fParts=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'});
+const fTime=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit'});
+const fDay=new Intl.DateTimeFormat('en-US',{timeZone:TZ,weekday:'short',month:'short',day:'numeric'});
+const fZone=new Intl.DateTimeFormat('en-US',{timeZone:TZ,timeZoneName:'short'});
+function parts(t){const o={};for(const p of fParts.formatToParts(new Date(t)))if(p.type!=='literal')o[p.type]=+p.value;o.hour%=24;return o;}
+function tzOff(t){const p=parts(t);return Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second)-Math.floor(t/1000)*1000;}
+function zoned(y,m,d,h,mi){const g=Date.UTC(y,m-1,d,h,mi);const t=g-tzOff(g);return g-tzOff(t);}
+const pad=n=>String(n).padStart(2,'0');
+function nightOf(t){
+  const p=parts(t);let y=p.year,m=p.month,d=p.day;
+  if(p.hour<12){const u=new Date(Date.UTC(y,m-1,d-1));y=u.getUTCFullYear();m=u.getUTCMonth()+1;d=u.getUTCDate();}
+  return {y,m,d,noon:zoned(y,m,d,12,0),key:y+'-'+pad(m)+'-'+pad(d)};
+}
+const tm=t=>t==null?'—':fTime.format(new Date(t));
+const zoneName=t=>(fZone.formatToParts(new Date(t)).find(p=>p.type==='timeZoneName')||{}).value||'';
+const DIRS=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const dirOf=az=>DIRS[Math.round(az/22.5)%16];
+const DIRW={N:'north',NNE:'north-northeast',NE:'northeast',ENE:'east-northeast',E:'east',ESE:'east-southeast',SE:'southeast',SSE:'south-southeast',S:'south',SSW:'south-southwest',SW:'southwest',WSW:'west-southwest',W:'west',WNW:'west-northwest',NW:'northwest',NNW:'north-northwest'};
+function phaseName(age){
+  if(age<8||age>352)return 'New moon';if(age<82)return 'Waxing crescent';if(age<98)return 'First quarter';
+  if(age<172)return 'Waxing gibbous';if(age<188)return 'Full moon';if(age<262)return 'Waning gibbous';if(age<278)return 'Last quarter';return 'Waning crescent';
+}
+const fmtMag=m=>(m<0?'−':'')+Math.abs(m).toFixed(1);
+
+// ---------- search ----------
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’']/g,'').replace(/[^a-z0-9*]+/g,' ').trim();
+const IDX=[];
+function addIdx(label,sub,sel,keys,pri){IDX.push({label,sub,sel,pri,keys:keys.filter(Boolean).map(norm)});}
+function labelOf(sel){if(sel.kind==='star'){const s=SK[sel.id];return s.name||desig(s.k).replace(/<[^>]+>/g,'');}if(sel.kind==='con')return CN[sel.id];if(sel.kind==='dso')return DSO.find(d=>d[1]===sel.id)[0];if(sel.kind==='planet')return sel.id;return sel.kind==='moon'?'The Moon':'The Sun';}
+for(const n of PN)addIdx(n,'Planet',{kind:'planet',id:n},[n],0);
+addIdx('The Moon','Earth’s moon',{kind:'moon'},['moon','the moon','luna'],0);
+addIdx('The Sun','Our star',{kind:'sun'},['sun','the sun','sol'],0);
+for(const s of STARS){
+  const l=s.k.split('_')[1],m=l.match(/^([a-z])(\d*)$/),gw=m?GW[m[1]]+(m[2]||''):'',con=CN[s.c]||s.c;
+  if(!s.name&&!m&&!/^\d+$/.test(l))continue;
+  addIdx(labelOf({kind:'star',id:s.k}),'Star in '+con+' · mag '+fmtMag(s.mag),{kind:'star',id:s.k},[s.name,gw&&gw+' '+con,gw&&gw+' '+s.c,/^\d+$/.test(l)?l+' '+con:''],s.name?1:3);
+}
+for(const [ab,name] of CONS)addIdx(name,'Constellation',{kind:'con',id:ab},[name,ab],2);
+for(const o of DSO)addIdx(o[0],(o[0]!==o[1]?o[1]+' · ':'')+DTYPE[o[4]],{kind:'dso',id:o[1]},[o[0],o[1],o[1].replace(/^M(\d+)$/,'messier $1')],o[5]==='e'?1:o[5]==='b'?2:3);
+for(const [a,sel] of [['North Star',{kind:'star',id:'UMi_a'}],['Pole Star',{kind:'star',id:'UMi_a'}],['Dog Star',{kind:'star',id:'CMa_a'}],['Big Dipper',{kind:'con',id:'UMa'}],['Little Dipper',{kind:'con',id:'UMi'}],['Seven Sisters',{kind:'dso',id:'M45'}],['Evening star',{kind:'planet',id:'Venus'}],['Morning star',{kind:'planet',id:'Venus'}],['Red planet',{kind:'planet',id:'Mars'}],['Orion’s Belt',{kind:'con',id:'Ori'}],['Milky Way center',{kind:'dso',id:'Sgr A*'}],['Teapot',{kind:'con',id:'Sgr'}],['Northern Cross',{kind:'con',id:'Cyg'}],['Summer Triangle',{kind:'star',id:'Lyr_a'}],['Great Square of Pegasus',{kind:'con',id:'Peg'}],['Alpha Centauri',{kind:'star',id:'Cen_a'}],['Epsilon Eridani',{kind:'star',id:'Eri_e'}],['Southern Cross',{kind:'con',id:'Cru'}]])
+  addIdx(labelOf(sel)||a,'Also called '+a,sel,[a],1);
+function addSatIdx(){for(let i=IDX.length-1;i>=0;i--)if(IDX[i].sel.kind==='sat')IDX.splice(i,1);
+  for(const s of SATS)addIdx(s.name,s.special?s.full:'Satellite · NORAD '+s.id,{kind:'sat',id:s.id},[s.name,s.full,String(s.id),s.id===25544?'space station international space station zarya':s.id===48274?'space station css chinese space station tianhe':s.id===20580?'hst hubble telescope':''],s.special?0:4);}
+addSatIdx();
+function search(q){
+  const n=norm(q);if(!n)return [];const nc=n.replace(/ /g,''),res=[];
+  for(const e of IDX){let best=9;
+    for(const k of e.keys){const kc=k.replace(/ /g,'');let sc=9;
+      if(k===n||kc===nc)sc=0;else if(k.startsWith(n)||kc.startsWith(nc))sc=1;else if((' '+k).includes(' '+n))sc=2;else if(n.length>2&&(k.includes(n)||kc.includes(nc)))sc=3;
+      if(sc<best)best=sc;}
+    if(best<9)res.push([best*10+e.pri,e]);}
+  res.sort((a,b)=>a[0]-b[0]);
+  const seen=new Set(),out=[];
+  for(const [,e] of res){const k=JSON.stringify(e.sel);if(seen.has(k))continue;seen.add(k);out.push(e);if(out.length>=8)break;}
+  return out;
+}
+
+// ---------- state ----------
+const $=id=>document.getElementById(id);
+const cv=$('sky'), ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1,need=true,hits=[],placed=[],firstSize=true;
+const st={t:Date.now(),vaz:180,valt:28,fov:100,dome:false,ex:0.35,play:false,speed:600,sel:null,night:null,ni:null,
+  tog:{lines:true,names:true,stars:true,planets:true,sats:true,mw:true,dso:false,ecl:false,grid:false,outer:true}};
+{const B=bodies(st.t);const sa=altOfV(hv(B.sun.ra,B.sun.dec,lstOf(st.t)));if(sa>-6){const p=parts(st.t);st.t=zoned(p.year,p.month,p.day,21,0);}}
+
+// sample a whole night (noon → noon) every 10 minutes
+function nightInfo(noon){
+  const S=[];
+  for(let i=0;i<=144;i++){
+    const t=noon+i*600000,B=bodies(t),l=lstOf(t);
+    const s={t,sun:altOfV(hv(B.sun.ra,B.sun.dec,l)),moon:altOfV(moonVec(B,l)),pl:{}};
+    for(const n of PN){const v=hv(B.pl[n].ra,B.pl[n].dec,l);s.pl[n]={alt:altOfV(v),az:azOfV(v),mag:B.pl[n].mag};}
+    S.push(s);
+  }
+  const cross=(get,thr,dir)=>{for(let i=1;i<S.length;i++){const a=get(S[i-1])-thr,b=get(S[i])-thr;if(dir<0?(a>0&&b<=0):(a<0&&b>=0))return S[i-1].t+a/(a-b)*600000;}return null;};
+  const ni={S,sunset:cross(s=>s.sun,-0.833,-1),darkA:cross(s=>s.sun,-18,-1),darkB:cross(s=>s.sun,-18,1),sunrise:cross(s=>s.sun,-0.833,1),
+    moonrise:cross(s=>s.moon,-0.833,1),moonset:cross(s=>s.moon,-0.833,-1),moonB:bodies(noon+720*60000).moon,pl:[]};
+  for(const n of PN){
+    const vis=S.filter(s=>s.sun<-8&&s.pl[n].alt>5);
+    const e={n,mag:S[72].pl[n].mag};
+    if(vis.length){const best=vis.reduce((a,b)=>b.pl[n].alt>a.pl[n].alt?b:a);Object.assign(e,{ok:true,from:vis[0].t,to:vis[vis.length-1].t,best:best.t,alt:best.pl[n].alt,az:best.pl[n].az});}
+    else{const up=S.some(s=>s.pl[n].alt>5);e.why=up?'Up only in daylight or bright twilight':'Below the horizon all night';}
+    ni.pl.push(e);
+  }
+  ni.pl.sort((a,b)=>(b.ok?1:0)-(a.ok?1:0)||a.mag-b.mag);
+  return ni;
+}
+function skyBand(sa){return sa>0?'#4a78bd':sa>-6?'#b4714f':sa>-12?'#3b3f6e':sa>-18?'#1c2550':'#0a1022';}
+function renderNight(){
+  const ni=st.ni, nd=st.night;
+  $('nightDate').textContent=fDay.format(new Date(nd.noon))+' into '+fDay.format(new Date(nd.noon+86400000));
+  const rows=[['Sunset',tm(ni.sunset)],['Fully dark',ni.darkA?tm(ni.darkA)+' – '+tm(ni.darkB):'Never fully dark'],['Sunrise',tm(ni.sunrise)],['Moonrise',tm(ni.moonrise)],['Moonset',tm(ni.moonset)]];
+  $('facts').innerHTML=rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
+  const m=ni.moonB;
+  $('moonTxt').innerHTML='<b>'+phaseName(m.age)+'</b>'+Math.round(m.illum*100)+'% lit at midnight';
+  drawMoonIcon(m.illum,m.age<180);
+  $('plist').innerHTML=ni.pl.map(e=>'<button class="pl'+(e.ok?'':' off')+'" data-p="'+e.n+'"><i style="background:'+PCOL[e.n]+'"></i><b>'+e.n+' <span style="display:inline;font-size:14px">mag '+fmtMag(e.mag)+(e.n==='Neptune'?' · telescope':e.n==='Uranus'?' · binoculars':'')+'</span></b><span>'+
+    (e.ok?'Best '+tm(e.best)+', '+Math.round(e.alt)+'° up in the '+DIRW[dirOf(e.az)]+'. Visible '+tm(e.from)+'–'+tm(e.to)+'.':e.why)+'</span></button>').join('');
+  const pr=[];for(const id of [25544,48274]){const s=SATS.find(x=>x.id===id);if(s)for(const p of passes(s))pr.push([s,p]);}
+  pr.sort((a,b)=>a[1].start-b[1].start);st.passList=pr;
+  $('passes').innerHTML=(pr.length?pr.map(([s,p],i)=>'<button class="pl" data-pass="'+i+'"><i style="background:#fff"></i><b>'+esc(s.name)+' · '+tm(p.start)+'</b><span>Appears in the '+DIRW[dirOf(p.saz)]+', peaks '+Math.round(p.max)+'° up in the '+DIRW[dirOf(p.maz)]+', gone by '+tm(p.end)+' in the '+DIRW[dirOf(p.eaz)]+'.</span></button>').join(''):'<p class="note" style="margin:4px 0">No visible passes of the ISS or Tiangong tonight.</p>')+'<p class="note" style="margin:6px 0 0">Hubble only skims the southern horizon from Siren’s latitude. Search any satellite to see its passes.</p>';
+  showTleAge();
+  $('slider').style.background='linear-gradient(90deg,'+ni.S.map((s,i)=>skyBand(s.sun)+' '+(i/144*100).toFixed(2)+'%').join(',')+')';
+}
+function showTleAge(){const d=Math.floor((Date.now()-SATEPOCH)/86400000);$('tleAge').textContent=SATEPOCH?'from '+fDay.format(new Date(SATEPOCH))+(d>=10?' (getting stale, paste fresh ones below)':''):'none loaded';}
+function drawMoonIcon(k,wax){
+  const c=$('moonIcon').getContext('2d');c.clearRect(0,0,44,44);
+  c.save();c.translate(22,22);if(!wax)c.scale(-1,1);
+  c.fillStyle='#1b2236';c.beginPath();c.arc(0,0,18,0,7);c.fill();
+  c.fillStyle='#efede4';phasePath(c,18,k);c.fill();c.restore();
+}
+function phasePath(c,r,k){
+  const e=(1-2*k)*r;c.beginPath();c.arc(0,0,r,-Math.PI/2,Math.PI/2,false);
+  c.ellipse(0,0,Math.abs(e),r,0,Math.PI/2,-Math.PI/2,e>0);
+}
+
+function syncTime(){
+  const nd=nightOf(st.t);
+  if(!st.night||st.night.key!==nd.key){st.night=nd;st.ni=nightInfo(nd.noon);$('date').value=nd.key;renderNight();}
+  $('slider').value=Math.round(clamp((st.t-st.night.noon)/60000,0,1440));
+  $('clock').textContent=tm(st.t);
+  $('whenTxt').textContent=fDay.format(new Date(st.t))+' · '+tm(st.t)+' '+zoneName(st.t);
+  infoKey=null;need=true;
+}
+
+// ---------- projection ----------
+function mkProj(){
+  const a=st.vaz*D2R,h=st.valt*D2R;
+  const f=[Math.cos(h)*Math.sin(a),Math.cos(h)*Math.cos(a),Math.sin(h)], r=[Math.cos(a),-Math.sin(a),0];
+  const u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];
+  const sc=st.dome?Math.min(W,H)*0.235:(W/2)/(2*Math.tan(st.fov*D2R/4));
+  const cx=W/2,cy=H/2;
+  const raw=v=>{const Z=v[0]*f[0]+v[1]*f[1]+v[2]*f[2],k=2/(1+Z)*sc;return [cx+(v[0]*r[0]+v[1]*r[1])*k,cy-(v[0]*u[0]+v[1]*u[1]+v[2]*u[2])*k,k,Z];};
+  return {sc,raw,P:v=>{const p=raw(v);return p[3]<-0.9?null:p;}};
+}
+const onScr=(p,m)=>p&&p[0]>-m&&p[0]<W+m&&p[1]>-m&&p[1]<H+m;
+function lerpHex(a,b,f){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);return [16,8,0].map(s=>Math.round(((A>>s)&255)+(((B>>s)&255)-((A>>s)&255))*f));}
+const SKY=[[-90,'#02040b','#060d1f'],[-18,'#02040b','#08132b'],[-12,'#040a1c','#172a52'],[-6,'#0b1838','#3e4b78'],[-2,'#1a2f5d','#b0765d'],[2,'#2e5a9e','#e2b48c'],[8,'#3d77c6','#a9c8ea'],[90,'#3a72c2','#b6d3f1']];
+function skyCols(sa){for(let i=1;i<SKY.length;i++)if(sa<=SKY[i][0]){const f=(sa-SKY[i-1][0])/(SKY[i][0]-SKY[i-1][0]);return [lerpHex(SKY[i-1][1],SKY[i][1],f),lerpHex(SKY[i-1][2],SKY[i][2],f)];}return [lerpHex(SKY[7][1],SKY[7][1],0),lerpHex(SKY[7][2],SKY[7][2],0)];}
+const rgb=(c,a)=>a==null?'rgb('+c.join(',')+')':'rgba('+c.join(',')+','+a+')';
+const sprite=document.createElement('canvas');sprite.width=sprite.height=64;
+{const g=sprite.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(205,214,240,1)');gr.addColorStop(0.5,'rgba(190,200,230,.45)');gr.addColorStop(1,'rgba(180,190,225,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);}
+
+function label(txt,x,y,color,font,center){
+  ctx.font=font;const w=ctx.measureText(txt).width;if(center)x-=w/2;
+  const r=[x-2,y-12,x+w+2,y+4];
+  for(const q of placed)if(r[0]<q[2]&&r[2]>q[0]&&r[1]<q[3]&&r[3]>q[1])return false;
+  placed.push(r);ctx.fillStyle=color;ctx.fillText(txt,x,y);return true;
+}
+function poly(P,vs){
+  ctx.beginPath();let pen=false,last=null;
+  for(const v of vs){const p=v[2]<-0.15?null:P(v);if(!p){pen=false;continue;}
+    if(pen&&Math.abs(p[0]-last[0])+Math.abs(p[1]-last[1])>W)pen=false;
+    pen?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);pen=true;last=p;}
+  ctx.stroke();
+}
+
+// ---------- draw ----------
+function draw(){
+  if(!W)return;
+  const t=st.t,B=bodies(t),lst=lstOf(t),pj=mkProj(),P=pj.P,ex=st.ex,tg=st.tog;
+  hits=[];placed=[];
+  const zf=st.dome?1:clamp(Math.sqrt(100/st.fov),0.85,1.8);
+  const sunV=hv(B.sun.ra,B.sun.dec,lst),sunAlt=altOfV(sunV),sunAz=azOfV(sunV);
+  const mv=moonVec(B,lst),moonAlt=altOfV(mv);
+  const dark=clamp((-sunAlt-4)/14,0,1);
+  const wash=moonAlt>0?B.moon.illum*Math.min(1,Math.sin(moonAlt*D2R)*2.2):0;
+  const lim=sunAlt>-3?-3.5:1.2+5.1*dark-1.5*wash*dark;
+  // sky
+  let [top,hor]=skyCols(sunAlt);
+  if(wash>0){const f=0.22*wash*dark;top=top.map((c,i)=>Math.round(c+([22,34,66][i]-c)*f));hor=hor.map((c,i)=>Math.round(c+([40,56,96][i]-c)*f));}
+  ctx.fillStyle=rgb(top);ctx.fillRect(0,0,W,H);
+  {const z=pj.raw([0,0,1]),hp=pj.raw(avec(0,st.vaz+180*(st.dome?0:0)));const R=Math.max(40,Math.hypot(hp[0]-z[0],hp[1]-z[1]));
+   const g=ctx.createRadialGradient(z[0],z[1],0,z[0],z[1],R);g.addColorStop(0,rgb(top));g.addColorStop(0.55,rgb(top.map((c,i)=>Math.round(c*0.7+hor[i]*0.3))));g.addColorStop(1,rgb(hor));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  if(sunAlt>-18&&sunAlt<8){const hp=pj.raw(avec(0,sunAz));const a=Math.max(0,1-Math.abs(sunAlt+3)/13)*0.6;
+    if(hp[3]>-0.85){const R=hp[2]*1.3;const g=ctx.createRadialGradient(hp[0],hp[1],0,hp[0],hp[1],R);g.addColorStop(0,'rgba(255,160,100,'+a+')');g.addColorStop(0.4,'rgba(230,120,110,'+a*0.35+')');g.addColorStop(1,'rgba(120,80,140,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}}
+  if(dark>0){const hp=pj.raw(avec(0,218));if(hp[3]>-0.85){const R=hp[2]*0.45;const g=ctx.createRadialGradient(hp[0],hp[1],0,hp[0],hp[1],R);g.addColorStop(0,'rgba(120,105,125,'+0.16*dark+')');g.addColorStop(1,'rgba(120,105,125,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}}
+  // milky way + texture
+  if(tg.mw&&lim>3.5){
+    const a=0.13*clamp((lim-3.5)/2.5,0,1);ctx.globalCompositeOperation='lighter';
+    for(const m of MW){const v=hv(m[0],m[1],lst);if(v[2]<-0.05)continue;const p=P(v);if(!p)continue;const s=m[3]*D2R*p[2];if(!onScr(p,s))continue;ctx.globalAlpha=m[2]*a;ctx.drawImage(sprite,p[0]-s,p[1]-s,2*s,2*s);}
+    ctx.globalAlpha=1;
+    for(const f of FAINT){if(f[2]>lim)continue;const v=hv(f[0],f[1],lst);if(v[2]<0)continue;const p=P(v);if(!onScr(p,2))continue;ctx.fillStyle='rgba(215,224,245,'+(0.25+0.5*clamp((lim-f[2])/1.2,0,1))*0.8+')';const s=0.9*zf;ctx.fillRect(p[0]-s/2,p[1]-s/2,s,s);}
+    ctx.globalCompositeOperation='source-over';
+  }
+  // grid & ecliptic
+  if(tg.grid){ctx.strokeStyle='rgba(150,180,230,.2)';ctx.lineWidth=1;
+    for(let a=15;a<90;a+=15){const vs=[];for(let z=0;z<=360;z+=3)vs.push(avec(a,z));poly(P,vs);}
+    for(let z=0;z<360;z+=30){const vs=[];for(let a=0;a<=88;a+=4)vs.push(avec(a,z));poly(P,vs);}
+    ctx.font='13px Jost,system-ui,sans-serif';ctx.fillStyle='rgba(170,195,235,.6)';
+    for(let a=15;a<90;a+=15){const p=P(avec(a,st.vaz+4));if(onScr(p,0))ctx.fillText(a+'°',p[0],p[1]-3);}}
+  if(tg.ecl){ctx.strokeStyle='rgba(235,205,130,.38)';ctx.setLineDash([6,6]);ctx.lineWidth=1.2;const vs=[];for(let l=0;l<=360;l+=2){const q=eclToEq(l,0);vs.push(hv(q.ra,q.dec,lst));}poly(P,vs);ctx.setLineDash([]);}
+  // stars positions
+  for(const s of STARS){const v=hv(s.ra,s.dec,lst);s.v=v;s.p=v[2]>-0.1?P(v):null;}
+  const lineA=0.42*clamp((lim-1.5)/3,0,1);
+  if(tg.lines&&lineA>0.02){
+    ctx.lineWidth=1;
+    for(const [a,b,ab] of SEGS){if(!a.p||!b.p||(a.v[2]<-0.05&&b.v[2]<-0.05))continue;
+      const dx=b.p[0]-a.p[0],dy=b.p[1]-a.p[1],L=Math.hypot(dx,dy);if(L<10||L>W*1.5)continue;
+      const g=Math.min(5*zf,L*0.25),ux=dx/L,uy=dy/L;
+      ctx.strokeStyle=st.sel&&st.sel.kind==='con'&&st.sel.id===ab?'rgba(190,215,255,.85)':'rgba(140,170,230,'+lineA+')';
+      ctx.beginPath();ctx.moveTo(a.p[0]+ux*g,a.p[1]+uy*g);ctx.lineTo(b.p[0]-ux*g,b.p[1]-uy*g);ctx.stroke();}
+  }
+  // deep sky
+  {ctx.strokeStyle='rgba(185,210,255,.55)';ctx.lineWidth=1;
+    for(const o of DSO){const isSel=st.sel&&st.sel.kind==='dso'&&st.sel.id===o[1];if(!(tg.dso&&dark>0.4)&&!isSel)continue;
+      const v=hv(o[2]*15,o[3],lst);if(v[2]<0.02)continue;const p=P(v);if(!onScr(p,20))continue;const r=6*zf;
+      if(o[4]==='G'){ctx.setLineDash([]);ctx.beginPath();ctx.ellipse(p[0],p[1],r*1.3,r*0.6,-0.5,0,7);ctx.stroke();}
+      else if(o[4]==='GC'){ctx.setLineDash([]);ctx.beginPath();ctx.arc(p[0],p[1],r*0.8,0,7);ctx.moveTo(p[0]-r*0.8,p[1]);ctx.lineTo(p[0]+r*0.8,p[1]);ctx.moveTo(p[0],p[1]-r*0.8);ctx.lineTo(p[0],p[1]+r*0.8);ctx.stroke();}
+      else if(o[4]==='N'||o[4]==='SNR'||o[4]==='PN'){ctx.setLineDash([]);ctx.strokeRect(p[0]-r*0.8,p[1]-r*0.8,r*1.6,r*1.6);}
+      else{ctx.setLineDash([2,3]);ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.stroke();}
+      o.p=p;o.lab=isSel||o[5]!=='t'||(!st.dome&&st.fov<55);hits.push({x:p[0],y:p[1],r:12,sel:{kind:'dso',id:o[1]},m:3});}
+    ctx.setLineDash([]);}
+  // stars
+  const big=[];
+  for(const s of STARS){const p=s.p;if(!p||s.v[2]<-0.01||s.mag>lim+0.2||!onScr(p,10))continue;
+    const a=clamp((lim+0.2-s.mag)/1.6,0,1),r=Math.max(0.6,(6.6-s.mag)*0.4*(0.85+0.45*ex))*zf;
+    if(s.mag<1.6){const R=r*(3+2*ex);const g=ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],R);g.addColorStop(0,'rgba('+s.rgb+','+0.3*a+')');g.addColorStop(1,'rgba('+s.rgb+',0)');ctx.fillStyle=g;ctx.fillRect(p[0]-R,p[1]-R,2*R,2*R);}
+    ctx.fillStyle='rgba('+s.rgb+','+a+')';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+    hits.push({x:p[0],y:p[1],r:Math.max(9,r+4),sel:{kind:'star',id:s.k},m:s.mag});
+    if(s.name)big.push([s,p,r,a]);}
+  // planets
+  const plab=[];
+  for(const n of PN){
+    if(!tg.outer&&(n==='Uranus'||n==='Neptune'))continue;
+    const b=B.pl[n],v=hv(b.ra,b.dec,lst);if(v[2]<-0.01)continue;const p=P(v);if(!onScr(p,30))continue;
+    const outer=n==='Uranus'||n==='Neptune';
+    const a=outer?0.8*clamp((lim-3.5)/2,0,1):clamp((lim+1.4-b.mag)/1.5,0,1);if(a<0.03)continue;
+    const core=(outer?1.4:1.8+Math.max(0,2-b.mag)*0.62)*(1+1.3*ex)*zf, col=PCOL[n];
+    const R=core*(2.6+3*ex);const g=ctx.createRadialGradient(p[0],p[1],core*0.5,p[0],p[1],R);g.addColorStop(0,col+Math.round(0x40*a).toString(16).padStart(2,'0'));g.addColorStop(1,col+'00');ctx.fillStyle=g;ctx.fillRect(p[0]-R,p[1]-R,2*R,2*R);
+    if(n==='Saturn'&&ex>0.15){const q=eclToEq(b.lon+1,0),p2=P(hv(q.ra,q.dec,lst));const ang=p2?Math.atan2(p2[1]-p[1],p2[0]-p[0]):0;ctx.strokeStyle='rgba(236,213,155,'+0.75*a+')';ctx.lineWidth=Math.max(1,core*0.28);ctx.beginPath();ctx.ellipse(p[0],p[1],core*2.1,core*2.1*Math.max(0.1,Math.abs(sind(b.B))),ang,0,7);ctx.stroke();}
+    const g2=ctx.createRadialGradient(p[0]-core*0.3,p[1]-core*0.3,0,p[0],p[1],core);g2.addColorStop(0,'rgba(255,255,255,'+a+')');g2.addColorStop(0.45,col);g2.addColorStop(1,col);ctx.globalAlpha=a;ctx.fillStyle=g2;ctx.beginPath();ctx.arc(p[0],p[1],core,0,7);ctx.fill();ctx.globalAlpha=1;
+    hits.push({x:p[0],y:p[1],r:Math.max(14,core+6),sel:{kind:'planet',id:n},m:-10});
+    plab.push([n,p,core,col,a]);
+  }
+  // satellites
+  const satLab=[];let nLit=0;
+  if(tg.sats&&SATS.length){
+    const sv=sunVecEq(t),g0=SL.gstime(new Date(t)),g1=SL.gstime(new Date(t-45000));
+    for(const s of SATS){
+      const isSel=st.sel&&st.sel.kind==='sat'&&st.sel.id===s.id;
+      const L=satLook(s,t,sv,g0);if(!L||L.el<-0.3)continue;
+      const vis=L.lit&&sunAlt<-4;if(!vis&&sunAlt>-4&&!isSel)continue;
+      const p=P(avec(L.el,L.az));if(!onScr(p,20))continue;
+      if(vis){nLit++;
+        const L2=satLook(s,t-45000,sv,g1);
+        if(L2){const q=P(avec(L2.el,L2.az));if(q&&Math.hypot(q[0]-p[0],q[1]-p[1])<W*0.6){const gr=ctx.createLinearGradient(q[0],q[1],p[0],p[1]);gr.addColorStop(0,'rgba(255,250,235,0)');gr.addColorStop(1,'rgba(255,250,235,'+(s.special?0.55:0.3)+')');ctx.strokeStyle=gr;ctx.lineWidth=s.special?1.6:1;ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(p[0],p[1]);ctx.stroke();}}
+        const r=(1.1+Math.max(0,3.5-s.mag)*0.38)*(1+0.6*ex)*zf;
+        if(s.special){const R=r*4;const gg=ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],R);gg.addColorStop(0,'rgba(255,255,255,.32)');gg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gg;ctx.fillRect(p[0]-R,p[1]-R,2*R,2*R);}
+        ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+        if(s.special||isSel)satLab.push([s.name,p,r]);
+      }else{
+        ctx.strokeStyle='rgba(150,165,195,.4)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(p[0],p[1],1.8*zf,0,7);ctx.stroke();
+        if(isSel||s.special)satLab.push([s.name+(L.lit?'':' · in shadow'),p,2,1]);
+      }
+      hits.push({x:p[0],y:p[1],r:10,sel:{kind:'sat',id:s.id},m:vis?-6:2});
+    }
+  }
+  // sun
+  if(sunAlt>-1.5){const p=P(sunV);if(onScr(p,80)){const r=Math.max(7,0.0047*p[2])*(1+ex);const g=ctx.createRadialGradient(p[0],p[1],r*0.8,p[0],p[1],r*7);g.addColorStop(0,'rgba(255,246,220,.7)');g.addColorStop(1,'rgba(255,240,210,0)');ctx.fillStyle=g;ctx.fillRect(p[0]-r*7,p[1]-r*7,r*14,r*14);ctx.fillStyle='#fff8e4';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();hits.push({x:p[0],y:p[1],r:r+8,sel:{kind:'sun'},m:-30});plab.push(['Sun',p,r,'#fff3d2',1]);}}
+  // moon
+  let moonP=null;
+  if(moonAlt>-1.5){const p=P(mv);if(onScr(p,60)){
+    moonP=p;const r=Math.max(5,0.00454*p[2])*(1+2.3*ex),k=B.moon.illum;
+    const g=ctx.createRadialGradient(p[0],p[1],r,p[0],p[1],r*(3.5+2*ex));g.addColorStop(0,'rgba(220,230,255,'+0.16*k+')');g.addColorStop(1,'rgba(220,230,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p[0],p[1],r*(3.5+2*ex),0,7);ctx.fill();
+    const dirTo=(vt)=>{const w=[0,1,2].map(i=>mv[i]+0.02*(vt[i]-mv[i]));const q=pj.raw(w);return Math.atan2(q[1]-p[1],q[0]-p[0]);};
+    const sAng=dirTo(sunV),nAng=dirTo(avec(LAT,0));
+    ctx.save();ctx.translate(p[0],p[1]);
+    ctx.fillStyle=sunAlt>0?'rgba(150,170,210,.25)':'rgba(34,40,58,.92)';ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();
+    ctx.save();ctx.rotate(sAng);phasePath(ctx,r,k);ctx.fillStyle='#f0eee5';ctx.fill();ctx.clip();ctx.rotate(-sAng);
+    ctx.rotate(nAng+Math.PI/2);ctx.fillStyle='rgba(110,112,122,.32)';
+    for(const m of [[0.62,0.28,0.14],[0.3,0.12,0.2],[0.24,0.42,0.15],[-0.25,0.45,0.25],[-0.55,0.02,0.3],[-0.12,-0.42,0.17],[0.55,-0.12,0.13],[0.38,-0.32,0.1],[0.05,0.74,0.12]]){ctx.beginPath();ctx.arc(m[0]*r,-m[1]*r,m[2]*r,0,7);ctx.fill();}
+    ctx.restore();ctx.restore();
+    hits.push({x:p[0],y:p[1],r:r+8,sel:{kind:'moon'},m:-20});
+    plab.push(['Moon',p,r,'#e9eefb',1]);
+  }}
+  // ground
+  {const night=clamp(dark+0.3,0,1);const gc=rgb(lerpHex('#16241d','#03060b',night));
+   ctx.beginPath();ctx.rect(0,0,W,H);
+   for(let i=0;i<TN;i++){const q=pj.raw(avec(TREE[i],i/4));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}
+   ctx.closePath();ctx.fillStyle=gc;ctx.fill('evenodd');
+   ctx.font='500 14px Jost,system-ui,sans-serif';ctx.fillStyle='rgba(175,190,220,.8)';
+   for(let i=0;i<8;i++){const az=i*45,p=pj.raw(avec(-1.4,az));if(p[3]>-0.8&&onScr(p,-6)){const s=DIRS[i*2];const w=ctx.measureText(s).width;ctx.fillText(s,p[0]-w/2,p[1]+10);}}}
+  // labels
+  const F13='500 13px Jost,system-ui,sans-serif';
+  for(const [n,p,c,col] of plab){if(n!=='Moon'&&n!=='Sun'&&!tg.planets)continue;if(n==='Moon'?moonAlt<0.5:false)continue;label(n,p[0]+c+6,p[1]+4,col,'500 14px Jost,system-ui,sans-serif');}
+  for(const [n,p,r,dim] of satLab)label(n,p[0]+r+5,p[1]-4,dim?'rgba(170,182,205,.8)':'#f6f2e6','500 13px Jost,system-ui,sans-serif');
+  if(tg.stars){big.sort((a,b)=>a[0].mag-b[0].mag);for(const [s,p,r,a] of big){if(s.v[2]<0.02)continue;if(s.mag>(st.fov<60&&!st.dome?4:2.3))continue;label(s.name,p[0]+r+5,p[1]-r-2,'rgba(215,225,245,'+Math.min(0.85,a)+')',F13);}}
+  if(tg.names&&lineA>0.05){
+    const acc={};for(const s of STARS){if(!CONSET.has(s.c)||s.k==='Oph_Barnard')continue;const o=acc[s.c]||(acc[s.c]=[0,0,0]);o[0]+=s.v[0];o[1]+=s.v[1];o[2]+=s.v[2];}
+    for(const c in acc){const o=acc[c],L=Math.hypot(...o),v=o.map(x=>x/L);if(v[2]<0.08)continue;const p=P(v);if(!onScr(p,-10))continue;
+      if(label(CN[c],p[0],p[1],st.sel&&st.sel.kind==='con'&&st.sel.id===c?'rgba(215,230,255,.95)':'rgba(150,178,232,'+Math.min(0.75,lineA*1.6)+')','italic 400 14px Jost,system-ui,sans-serif',true)){const r=placed[placed.length-1];hits.push({x:(r[0]+r[2])/2,y:p[1]-4,r:Math.max(16,(r[2]-r[0])/2),sel:{kind:'con',id:c},m:20});}}}
+  for(const o of DSO){if(o.p&&o.lab)label(o[0]===o[1]?o[1]:o[0],o.p[0]+9*zf,o.p[1]+12,'rgba(185,210,255,.75)',F13);o.p=null;}
+  // selection ring
+  const sp=selPos(B,lst,pj,mv,sunV);
+  if(sp&&onScr(sp,0)){ctx.strokeStyle='rgba(200,220,255,.9)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sp[0],sp[1],st.sel.kind==='moon'?Math.max(5,0.00454*sp[2])*(1+2.3*ex)+7:13,0,7);ctx.stroke();}
+  // state line
+  const stateTxt=sunAlt>0?'Daytime':sunAlt>-6?'Civil twilight':sunAlt>-12?'Nautical twilight':sunAlt>-18?'Astronomical twilight':'Full darkness';
+  $('state').textContent=stateTxt+(moonAlt>0?' · Moon up, '+Math.round(B.moon.illum*100)+'% lit':' · Moon down')+(tg.sats&&sunAlt<-4?' · '+nLit+' satellite'+(nLit===1?'':'s')+' sunlit':'')+' · facing '+(st.dome?'straight up':DIRW[dirOf(rev(st.vaz))]+', '+Math.round(st.valt)+'° up');
+  updateInfo(B,lst,mv,sunV);
+}
+function selVec(sel,B,lst,mv,sunV){
+  if(!sel)return null;
+  if(sel.kind==='star'){const s=SK[sel.id];return hv(s.ra,s.dec,lst);}
+  if(sel.kind==='planet'){const b=B.pl[sel.id];return hv(b.ra,b.dec,lst);}
+  if(sel.kind==='moon')return mv||moonVec(B,lst);
+  if(sel.kind==='sun')return sunV||hv(B.sun.ra,B.sun.dec,lst);
+  if(sel.kind==='dso'){const o=DSO.find(d=>d[1]===sel.id);return hv(o[2]*15,o[3],lst);}
+  if(sel.kind==='sat'){const s=SATS.find(x=>x.id===sel.id);if(!s)return null;const L=satLook(s,st.t,sunVecEq(st.t));return L?avec(L.el,L.az):null;}
+  return null;
+}
+function selPos(B,lst,pj,mv,sunV){const v=selVec(st.sel,B,lst,mv,sunV);if(!v||v[2]<-0.005)return null;return pj.P(v);}
+
+// ---------- info card ----------
+let infoKey=null,riseCache={},goTarget=null;
+function riseSet(sel){
+  const key=JSON.stringify(sel)+st.night.key;if(riseCache[key])return riseCache[key];
+  const thr=sel.kind==='moon'||sel.kind==='sun'?-0.833:-0.5,S=[];
+  for(let i=0;i<=144;i++){const t=st.night.noon+i*600000,B=bodies(t),l=lstOf(t);S.push([t,altOfV(selVec(sel,B,l,moonVec(B,l))),st.ni.S[i].sun]);}
+  let rise=null,set=null,mx=S[0],bd=null;
+  for(let i=1;i<S.length;i++){const a=S[i-1][1]-thr,b=S[i][1]-thr;if(a<0&&b>=0&&rise==null)rise=S[i-1][0]+a/(a-b)*600000;if(a>0&&b<=0&&set==null)set=S[i-1][0]+a/(a-b)*600000;if(S[i][1]>mx[1])mx=S[i];if(S[i][2]<-12&&S[i][1]>3&&(!bd||S[i][1]>bd[1]))bd=S[i];}
+  const r={rise,set,mx,best:bd||(mx[1]>3&&sel.kind!=='sun'?mx:null),allUp:S.every(s=>s[1]>thr),allDown:S.every(s=>s[1]<=thr)};
+  riseCache[key]=r;return r;
+}
+function setGo(g){goTarget=g;$('iGo').hidden=!g;if(g)$('iGo').textContent=g.label;}
+const showRows=rows=>{$('iRows').innerHTML=rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');};
+function satInfo(sel,sunAlt){
+  const s=SATS.find(x=>x.id===sel.id);if(!s){st.sel=null;$('info').hidden=true;return;}
+  const L=satLook(s,st.t,sunVecEq(st.t));
+  const k='sat'+s.id+'|'+(L?Math.round(L.el*2)+'|'+Math.round(L.az/2)+'|'+L.lit:'x')+'|'+st.night.key;
+  $('info').hidden=false;if(infoKey===k)return;infoKey=k;
+  $('iName').textContent=s.special?s.full:s.name;
+  $('iSub').textContent=(s.special?'':'Satellite · ')+'NORAD '+s.id+' · orbit from '+fDay.format(new Date(s.epoch));
+  const rows=[];
+  if(L){
+    rows.push(['Right now',L.el>0?Math.round(L.el)+'° up, toward the '+DIRW[dirOf(L.az)]:'Below the horizon']);
+    if(L.el>0)rows.push(['Can you see it?',sunAlt>-4?'No, the sky is too bright':L.lit?'Yes if it’s bright enough: sunlit, like a steady moving star':'No, it’s in Earth’s shadow']);
+    const h=SL.eciToGeodetic(L.p,L.g).height,sp=Math.hypot(L.v.x,L.v.y,L.v.z);
+    rows.push(['Height',Math.round(h).toLocaleString('en-US')+' km ('+Math.round(h*0.6214).toLocaleString('en-US')+' mi)']);
+    rows.push(['Speed',sp.toFixed(1)+' km/s ('+Math.round(sp*2236.94).toLocaleString('en-US')+' mph)']);
+    rows.push(['Distance from you',Math.round(L.range).toLocaleString('en-US')+' km']);
+  }else rows.push(['Right now','Position unavailable from this orbit']);
+  const ps=passes(s).filter(p=>p.end>st.t),cur=ps.find(p=>p.start<=st.t),next=ps.find(p=>p.start>st.t);
+  if(cur)rows.push(['This pass','Peaks '+Math.round(cur.max)+'° up in the '+DIRW[dirOf(cur.maz)]+' at '+tm(cur.tmax)]);
+  rows.push(['Next visible pass',next?tm(next.start)+', up to '+Math.round(next.max)+'° in the '+DIRW[dirOf(next.maz)]:'None left tonight']);
+  showRows(rows);
+  setGo(next&&!cur?{t:next.tmax-150000,real:true,sel,az:next.maz,alt:next.max,label:'Watch its next pass in real time · '+tm(next.start)}:null);
+}
+function updateInfo(B,lst,mv,sunV){
+  const box=$('info'),sel=st.sel;
+  if(!sel){box.hidden=true;return;}
+  if(sel.kind==='sat')return satInfo(sel,altOfV(sunV));
+  if(sel.kind==='con'){
+    box.hidden=false;const k=JSON.stringify(sel);if(infoKey===k)return;infoKey=k;
+    const mem=STARS.filter(s=>s.c===sel.id&&s.mag<7).sort((a,b)=>a.mag-b.mag);
+    $('iName').textContent=CN[sel.id];$('iSub').textContent='Constellation · '+mem.length+' stars drawn';
+    showRows([['Brightest',mem.slice(0,3).map(s=>s.name||desig(s.k)).join(', ')]]);setGo(null);return;
+  }
+  const v=selVec(sel,B,lst,mv,sunV),alt=altOfV(v),az=azOfV(v);
+  const k=JSON.stringify(sel)+'|'+Math.round(alt*2)+'|'+Math.round(az)+'|'+st.night.key+'|'+Math.round(st.t/1200000);
+  box.hidden=false;if(infoKey===k)return;infoKey=k;
+  let name='',sub='',rows=[],dec=null;
+  const pos=alt>0?Math.round(alt)+'° up, toward the '+DIRW[dirOf(az)]:'Below the horizon';
+  if(sel.kind==='star'){const s=SK[sel.id],dg=desig(s.k);dec=s.dec;name=s.name||dg;sub=(s.name&&dg?dg+' · ':'')+'Star in '+(CN[s.c]||s.c);rows.push(['Brightness','mag '+fmtMag(s.mag)+(s.mag>6.5?' (needs a telescope)':s.mag>5.6?' (binoculars)':'')]);}
+  if(sel.kind==='planet'){const b=B.pl[sel.id];name=sel.id;sub='Planet · '+b.dist.toFixed(2)+' AU from Earth ('+Math.round(b.dist*8.317)+' light-minutes)';rows.push(['Brightness','mag '+fmtMag(b.mag)+(sel.id==='Neptune'?' (needs a telescope)':sel.id==='Uranus'?' (binoculars)':'')]);if(sel.id==='Saturn')rows.push(['Rings','tilted '+Math.abs(b.B).toFixed(1)+'° to us']);}
+  if(sel.kind==='moon'){const m=B.moon;name='The Moon';sub=phaseName(m.age)+' · '+Math.round(m.illum*100)+'% lit';rows.push(['Distance',Math.round(m.dist*6378).toLocaleString('en-US')+' km']);}
+  if(sel.kind==='sun'){name='The Sun';sub='Our star. Never look at it directly.';}
+  if(sel.kind==='dso'){const o=DSO.find(d=>d[1]===sel.id);dec=o[3];name=esc(o[0]);sub=(o[0]!==o[1]?esc(o[1])+' · ':'')+DTYPE[o[4]];rows.push(['Seeing it',DEYE[o[5]][0].toUpperCase()+DEYE[o[5]].slice(1)]);if(o[6])rows.push(['About',esc(o[6])]);}
+  rows.unshift(['Right now',pos]);
+  const rs=riseSet(sel);
+  if(dec!=null&&dec<LAT-90)rows.push(['From Siren','Too far south: it never rises here']);
+  else if(rs.allUp)rows.push(['Tonight',dec!=null&&dec>90-LAT?'Circumpolar: up all night, every night':'Above the horizon all night']);
+  else if(rs.allDown)rows.push(['Tonight','Stays below the horizon']);
+  else{if(rs.rise)rows.push(['Rises',tm(rs.rise)]);if(rs.mx[1]>0)rows.push(['Highest',tm(rs.mx[0])+', '+Math.round(rs.mx[1])+'° up']);if(rs.set)rows.push(['Sets',tm(rs.set)]);}
+  $('iName').innerHTML=name;$('iSub').innerHTML=sub;showRows(rows);
+  setGo(rs.best&&Math.abs(rs.best[0]-st.t)>20*60000?{t:rs.best[0],sel,label:'Show it at its best tonight · '+tm(rs.best[0])+', '+Math.round(rs.best[1])+'° up'}:null);
+}
+function aim(sel,az,alt){
+  if(az==null){const B=bodies(st.t),l=lstOf(st.t);const v=selVec(sel,B,l,moonVec(B,l),hv(B.sun.ra,B.sun.dec,l));if(!v)return;az=azOfV(v);alt=altOfV(v);}
+  st.dome=false;st.vaz=az;st.valt=alt>3?clamp(alt,8,80):10;st.fov=sel.kind==='dso'?Math.min(st.fov,60):Math.min(st.fov,sel.kind==='sat'?110:95);markViews();need=true;
+}
+function goWatch(g){
+  st.t=g.t;if(g.real){st.speed=1;$('speed').value='1';if(!st.play)togglePlay();}
+  syncTime();st.sel=g.sel;infoKey=null;aim(g.sel,g.az,g.alt);
+}
+$('iGo').addEventListener('click',()=>{if(goTarget)goWatch(goTarget);});
+
+// ---------- interaction ----------
+const ptrs=new Map();let pinch=null,moved=0,hintGone=false;
+function hideHint(){if(!hintGone){hintGone=true;$('hint').style.opacity=0;}}
+function setFov(f){st.fov=clamp(f,15,140);need=true;}
+function setDome(on){st.dome=on;if(on){st.vaz=180;st.valt=90;}markViews();need=true;}
+function markViews(){for(const id of ['vN','vE','vS','vW','vZ'])$(id).classList.remove('on');if(st.dome)$('vZ').classList.add('on');else{const m={0:'vN',90:'vE',180:'vS',270:'vW'};const a=Math.round(rev(st.vaz)/90)*90%360;if(Math.abs(((rev(st.vaz)-a+540)%360)-180)<12)$(m[a]).classList.add('on');}}
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;hideHint();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),fov:st.fov};}});
+cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId),dx=e.clientX-p[0],dy=e.clientY-p[1];ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+  if(ptrs.size===2&&pinch){const [a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(st.dome&&d>pinch.d*1.15){st.dome=false;st.valt=65;pinch.fov=120;}if(!st.dome)setFov(pinch.fov*pinch.d/Math.max(d,1));moved=99;return;}
+  moved+=Math.abs(dx)+Math.abs(dy);if(moved<4)return;
+  if(st.dome)st.vaz-=dx*0.35;else{const dpp=st.fov/W;st.vaz=rev(st.vaz-dx*dpp);st.valt=clamp(st.valt+dy*dpp,2,90);}
+  markViews();need=true;});
+const endPtr=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;
+  if(moved<4&&e.type==='pointerup'){const r=cv.getBoundingClientRect();pick(e.clientX-r.left,e.clientY-r.top);}};
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('wheel',e=>{e.preventDefault();hideHint();if(st.dome){if(e.deltaY<0){st.dome=false;st.valt=65;st.fov=120;markViews();need=true;}return;}setFov(st.fov*Math.exp(e.deltaY*0.0012));},{passive:false});
+function pick(x,y){let best=null,bd=1e9;for(const h of hits){const d=Math.hypot(h.x-x,h.y-y);if(d<h.r){const sc=d+(h.m||0)*0.6;if(sc<bd){bd=sc;best=h;}}}
+  st.sel=best?best.sel:null;infoKey=null;need=true;}
+$('infoX').addEventListener('click',()=>{st.sel=null;need=true;});
+for(const id of ['vN','vE','vS','vW'])$(id).addEventListener('click',e=>{st.dome=false;st.vaz=+e.currentTarget.dataset.az;st.valt=25;st.fov=W<H?80:100;markViews();need=true;});
+$('vZ').addEventListener('click',()=>setDome(true));
+window.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea'))return;if(e.key==='/'){e.preventDefault();$('q').focus();return;}const step=st.fov/18;
+  if(e.key==='ArrowLeft'){st.vaz=rev(st.vaz-step);}else if(e.key==='ArrowRight'){st.vaz=rev(st.vaz+step);}else if(e.key==='ArrowUp'){st.valt=clamp(st.valt+step,2,90);}else if(e.key==='ArrowDown'){st.valt=clamp(st.valt-step,2,90);}
+  else if(e.key==='+'||e.key==='='){setFov(st.fov/1.15);}else if(e.key==='-'){setFov(st.fov*1.15);}else if(e.key===' '){togglePlay();e.preventDefault();}else return;markViews();need=true;});
+$('slider').addEventListener('input',e=>{st.t=st.night.noon+(+e.target.value)*60000;syncTime();});
+$('date').addEventListener('change',e=>{const m=e.target.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return;const off=st.t-st.night.noon;st.t=zoned(+m[1],+m[2],+m[3],12,0)+off;syncTime();});
+$('now').addEventListener('click',()=>{st.t=Date.now();st.speed=1;$('speed').value='1';if(!st.play)togglePlay();syncTime();});
+$('passes').addEventListener('click',e=>{const b=e.target.closest('[data-pass]');if(!b)return;const [s,p]=st.passList[+b.dataset.pass];goWatch({t:p.tmax-150000,real:true,sel:{kind:'sat',id:s.id},az:p.maz,alt:p.max});});
+$('tleGo').addEventListener('click',()=>{const txt=$('tleIn').value,l=parseTLE(txt);if(!l.length){$('tleMsg').textContent='Couldn’t read any orbits from that text.';return;}
+  setSats(l);addSatIdx();try{localStorage.setItem('siren-tle',txt);}catch(e){}$('tleMsg').textContent='Loaded '+l.length+' satellites.';$('tleIn').value='';renderNight();need=true;});
+{const q=$('q'),ul=$('results');let res=[],act=0;
+  const paint=()=>{[...ul.querySelectorAll('button')].forEach((b,i)=>b.classList.toggle('act',i===act));};
+  const render=()=>{if(!q.value.trim()){ul.hidden=true;return;}res=search(q.value);act=0;
+    if(!res.length){ul.innerHTML='<li class="none">Nothing by that name here. This map knows about 420 stars, all 110 Messier objects plus 30 other famous deep-sky sights, the planets, the Moon, and about 150 bright satellites.</li>';ul.hidden=false;return;}
+    const B=bodies(st.t),l=lstOf(st.t),mv=moonVec(B,l),sv=hv(B.sun.ra,B.sun.dec,l);
+    ul.innerHTML=res.map((e,i)=>{let stt='';if(e.sel.kind!=='con'){const v=selVec(e.sel,B,l,mv,sv);if(v){const a=altOfV(v);stt=a>0?'<em class="up">Up now · '+dirOf(azOfV(v))+'</em>':'<em>Below horizon</em>';}}
+      return '<li><button type="button" data-i="'+i+'"><b>'+esc(e.label)+'</b><small>'+esc(e.sub)+'</small>'+stt+'</button></li>';}).join('');ul.hidden=false;paint();};
+  const choose=e=>{if(!e)return;st.sel=e.sel;infoKey=null;aim(e.sel);ul.hidden=true;q.value='';q.blur();hideHint();};
+  q.addEventListener('input',render);q.addEventListener('focus',render);
+  q.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){act=Math.min(act+1,res.length-1);paint();e.preventDefault();}else if(e.key==='ArrowUp'){act=Math.max(act-1,0);paint();e.preventDefault();}else if(e.key==='Enter'){choose(res[act]);e.preventDefault();}else if(e.key==='Escape'){ul.hidden=true;q.blur();}});
+  ul.addEventListener('pointerdown',e=>e.preventDefault());
+  ul.addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)choose(res[+b.dataset.i]);});
+  q.addEventListener('blur',()=>setTimeout(()=>{ul.hidden=true;},120));
+}
+$('speed').addEventListener('change',e=>{st.speed=+e.target.value;});
+function togglePlay(){st.play=!st.play;$('playTxt').textContent=st.play?'Pause':'Play';$('playIcon').setAttribute('d',st.play?'M3 1.5h3v11H3zM8 1.5h3v11H8z':'M3 1.5v11l9-5.5z');}
+$('play').addEventListener('click',togglePlay);
+$('ex').addEventListener('input',e=>{st.ex=e.target.value/100;need=true;});
+for(const k of Object.keys(st.tog)){const el=$('t-'+k);if(!el)continue;el.checked=st.tog[k];el.addEventListener('change',()=>{st.tog[k]=el.checked;need=true;});}
+$('plist').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const n=b.dataset.p,en=st.ni.pl.find(q=>q.n===n);
+  if(en.ok){st.t=en.best;syncTime();st.dome=false;st.vaz=en.az;st.valt=clamp(en.alt,10,70);st.fov=W<H?70:85;}
+  st.sel={kind:'planet',id:n};infoKey=null;markViews();need=true;});
+{const ticks=[['3 PM',180],['6 PM',360],['9 PM',540],['12 AM',720],['3 AM',900],['6 AM',1080],['9 AM',1260]];$('ticks').innerHTML=ticks.map(t=>'<span style="left:'+(t[1]/1440*100)+'%">'+t[0]+'</span>').join('');}
+
+const stage=$('stage');
+const ro=new ResizeObserver(()=>{const r=stage.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(firstSize&&W){firstSize=false;if(W<H){st.fov=80;st.valt=32;}}need=true;});
+ro.observe(stage);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{need=true;});
+let last=0;
+function loop(ts){
+  if(st.play&&last){st.t+=(ts-last)*st.speed;syncTime();}
+  last=ts;if(need){need=false;draw();}
+  requestAnimationFrame(loop);
+}
+syncTime();markViews();requestAnimationFrame(loop);
+// Fresh orbits published next to the page (refreshed by scripts/update-tle.sh / the deploy workflow)
+fetch('data/visual.tle',{cache:'no-cache'}).then(r=>r.ok?r.text():Promise.reject(r.status)).then(txt=>{
+  const l=parseTLE(txt);if(!l.length)return;
+  const ep=l.reduce((m,s)=>Math.max(m,s.epoch),0);if(ep<SATEPOCH)return;
+  setSats(l);addSatIdx();renderNight();infoKey=null;need=true;
+}).catch(()=>{});
+}
+</script>
 </body>
 </html>
