@@ -2147,14 +2147,14 @@ async function findPlace(q){
   }
   res=res.slice(0,8);
   if(!res.length){locMsg('No places called “'+city+'”. Try a nearby town, or type coordinates.');return;}
-  if(res.length===1)return pick(res[0]);
+  if(res.length===1)return pickPlace(res[0]);
   locMsg('Which one?');
   const ul=$('locRes');
   res.forEach(r=>{const li=document.createElement('li'),b=document.createElement('button');b.type='button';
     b.textContent=placeName(r);const sm=document.createElement('small');sm.textContent=coordTxt(r.latitude,r.longitude)+(r.population?' · pop. '+r.population.toLocaleString('en-US'):'');b.append(sm);
-    b.addEventListener('click',()=>pick(r));li.append(b);ul.append(li);});
+    b.addEventListener('click',()=>pickPlace(r));li.append(b);ul.append(li);});
 }
-function pick(r){locMsg('Opening the sky over '+placeName(r)+'…');setLoc({lat:+r.latitude.toFixed(4),lon:+r.longitude.toFixed(4),tz:r.timezone,name:placeName(r),src:'search'});}
+function pickPlace(r){locMsg('Opening the sky over '+placeName(r)+'…');setLoc({lat:+r.latitude.toFixed(4),lon:+r.longitude.toFixed(4),tz:r.timezone,name:placeName(r),src:'search'});}
 $('locBtn').addEventListener('click',()=>{locMsg('');$('locRes').innerHTML='';$('locQ').value='';dlg.showModal();});
 $('locGPS').addEventListener('click',()=>useGPS(true));
 $('locForm').addEventListener('submit',async e=>{
