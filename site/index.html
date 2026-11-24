@@ -79,6 +79,27 @@ h1 small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-we
 #info dd{margin:0}
 #infoX{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:10px;border:0;background:transparent;font-size:24px;cursor:pointer;color:var(--mute)}
 #iGo{margin-top:10px;width:100%;white-space:normal}
+#info{max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain}
+@media (min-width:761px){#info{width:min(360px,calc(100% - 24px))}}
+#iFig{margin:2px 0 10px;border-radius:10px;overflow:hidden;background:#02040a;aspect-ratio:16/9}
+#iFig[hidden],#iSumWrap[hidden]{display:none}
+#iImg{display:block;width:100%;height:100%;object-fit:cover}
+#info #iSum{margin:0;color:var(--ink);font-size:14px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+#info #iSum.open{display:block;-webkit-line-clamp:unset}
+#iSumWrap{margin:0 0 10px}
+.ilink{border:0;background:none;padding:2px 0;color:var(--acc);cursor:pointer;font-size:14px}
+.iacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ia{min-height:34px;padding:4px 11px;border-radius:17px;border:1px solid var(--line);background:#111a2e;font-size:13px;cursor:pointer}
+.ia:hover{border-color:var(--acc2)}
+.ia[aria-pressed="true"]{background:#22335a;border-color:var(--acc2)}
+.ia[hidden]{display:none}
+#iMore h4{margin:14px 0 6px;font-size:13px;font-weight:500;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+#iMore h4[hidden]{display:none}
+.irel{display:flex;flex-wrap:wrap;gap:6px}
+.irel button{min-height:32px;padding:3px 10px;border-radius:16px;border:1px solid var(--line);background:#0e1628;font-size:13px;cursor:pointer;color:var(--acc)}
+.irel button:hover{border-color:var(--acc2)}
+#info .isrc{margin:12px 0 0;font-size:12px}
+.isrc a{color:var(--acc)}
 #iGo[hidden]{display:none}
 #fab{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:6}
 .fab{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(9,14,27,.86);display:grid;place-items:center;cursor:pointer;color:var(--ink);font-size:14px;font-weight:600;padding:0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -169,9 +190,10 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 #fab{top:calc(var(--top) + 4px);right:max(10px,env(safe-area-inset-right))}
 .phone-only{display:grid}
 #hint{bottom:calc(var(--sheet) + 12px);font-size:13px;left:16px;right:16px;transform:none;margin:0 auto;width:fit-content}
-#info{top:auto;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));width:auto;bottom:calc(var(--sheet) + 10px);max-height:44svh;overflow-y:auto;overscroll-behavior:contain;padding:12px 14px}
+#info{top:auto;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));width:auto;bottom:calc(var(--sheet) + 10px);max-height:58svh;overflow-y:auto;overscroll-behavior:contain;padding:12px 14px}
 #info h3{font-size:20px}
 body.sheet-open #info,body.sheet-open #hint{display:none}
+#info{z-index:12;max-height:min(58svh,calc(100svh - var(--top) - var(--sheet) - 24px))}
 .dock{display:flex;flex-direction:column;position:absolute;left:0;right:0;bottom:0;z-index:15;background:var(--panel);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:0 max(14px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 8px) max(14px,env(safe-area-inset-left));box-shadow:0 -12px 32px rgba(0,0,0,.45)}
 .handle{display:block;align-self:stretch;height:22px;border:0;background:none;cursor:pointer;position:relative;padding:0;touch-action:none}
 .handle::before{content:"";position:absolute;left:50%;top:8px;width:44px;height:5px;border-radius:3px;background:#2c3a5c;transform:translateX(-50%)}
@@ -236,8 +258,23 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
       <button id="infoX" aria-label="Close">×</button>
       <h3 id="iName"></h3>
       <p id="iSub"></p>
+      <figure id="iFig" hidden><img id="iImg" alt="" decoding="async"></figure>
+      <div id="iSumWrap" hidden><p id="iSum"></p><button class="ilink" id="iSumMore" type="button" hidden>Read more</button></div>
       <dl id="iRows"></dl>
       <button class="btn" id="iGo" hidden></button>
+      <div class="iacts" id="iActs">
+        <button class="ia" id="aCenter" type="button">Center</button>
+        <button class="ia" id="aFollow" type="button" aria-pressed="false">Follow</button>
+        <button class="ia" id="aPath" type="button" aria-pressed="false">Path tonight</button>
+        <button class="ia" id="aZoom" type="button">Zoom in</button>
+      </div>
+      <div id="iMore">
+        <h4 id="iFactsH" hidden>Facts</h4>
+        <dl id="iFacts"></dl>
+        <h4 id="iRelH" hidden></h4>
+        <div class="irel" id="iRel"></div>
+        <p class="isrc" id="iSrc" hidden></p>
+      </div>
     </div>
     <div id="hint">Drag to look around · scroll or pinch to zoom · tap a star or planet</div>
     <div id="fab">
@@ -1900,6 +1937,7 @@ function draw(){
     for(const c in acc){const o=acc[c],L=Math.hypot(...o),v=o.map(x=>x/L);if(v[2]<0.08)continue;const p=P(v);if(!onScr(p,-10))continue;
       if(label(CN[c],p[0],p[1],st.sel&&st.sel.kind==='con'&&st.sel.id===c?'rgba(215,230,255,.95)':'rgba(150,178,232,'+Math.min(0.75,lineA*1.6)+')','italic 400 14px Jost,system-ui,sans-serif',true)){const r=placed[placed.length-1];hits.push({x:(r[0]+r[2])/2,y:p[1]-4,r:Math.max(16,(r[2]-r[0])/2),sel:{kind:'con',id:c},m:20});}}}
   for(const o of DSO){if(o.p&&o.lab)label(o[0]===o[1]?o[1]:o[0],o.p[0]+9*zf,o.p[1]+12,'rgba(185,210,255,.75)',F13);o.p=null;}
+  drawPath(P);
   // selection ring
   const sp=selPos(B,lst,pj,mv,sunV);
   if(sp&&onScr(sp,0)){ctx.strokeStyle='rgba(200,220,255,.9)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sp[0],sp[1],st.sel.kind==='moon'?Math.max(5,0.00454*sp[2])*(1+2.3*ex)+7:13,0,7);ctx.stroke();}
@@ -1922,6 +1960,162 @@ function selPos(B,lst,pj,mv,sunV){const v=selVec(st.sel,B,lst,mv,sunV);if(!v||v[
 
 // ---------- info card ----------
 let infoKey=null,riseCache={},goTarget=null;
+// ---------- learn more: picture, story, facts and things to do for whatever is selected ----------
+const GRN={a:'Alpha',b:'Beta',g:'Gamma',d:'Delta',e:'Epsilon',z:'Zeta',h:'Eta',q:'Theta',i:'Iota',k:'Kappa',l:'Lambda',m:'Mu',n:'Nu',x:'Xi',o:'Omicron',p:'Pi',r:'Rho',s:'Sigma',t:'Tau',u:'Upsilon',f:'Phi',c:'Chi',y:'Psi',w:'Omega'};
+const GEN={And:'Andromedae',Aql:'Aquilae',Aqr:'Aquarii',Ari:'Arietis',Aur:'Aurigae',Boo:'Boötis',CMa:'Canis Majoris',CMi:'Canis Minoris',CVn:'Canum Venaticorum',Cap:'Capricorni',Car:'Carinae',Cas:'Cassiopeiae',Cen:'Centauri',Cep:'Cephei',Cet:'Ceti',Cnc:'Cancri',CrB:'Coronae Borealis',Cru:'Crucis',Crv:'Corvi',Cyg:'Cygni',Del:'Delphini',Dra:'Draconis',Eri:'Eridani',Gem:'Geminorum',Gru:'Gruis',Her:'Herculis',Hya:'Hydrae',Leo:'Leonis',Lep:'Leporis',Lib:'Librae',Lyr:'Lyrae',Oph:'Ophiuchi',Ori:'Orionis',Pav:'Pavonis',Peg:'Pegasi',Per:'Persei',Phe:'Phoenicis',PsA:'Piscis Austrini',Psc:'Piscium',Pup:'Puppis',Sco:'Scorpii',Ser:'Serpentis',Sge:'Sagittae',Sgr:'Sagittarii',Tau:'Tauri',TrA:'Trianguli Australis',Tri:'Trianguli',UMa:'Ursae Majoris',UMi:'Ursae Minoris',Vel:'Velorum',Vir:'Virginis'};
+// [size, spins once in, goes around the Sun in, moons, average distance from the Sun, one good thing to know]
+const PF={
+ Mercury:['4,879 km across, about a third of Earth','58.6 Earth days','88 days','None','58 million km','The smallest planet and the closest to the Sun. It never gets far from the Sun in our sky, so look for it low in twilight.'],
+ Venus:['12,104 km across, almost Earth’s twin','243 days, backwards','225 days','None','108 million km','The brightest planet. Its thick clouds trap heat, so its surface is about 465 °C (870 °F), hotter than Mercury.'],
+ Mars:['6,779 km across, about half of Earth','24 h 37 min','687 days','2 (Phobos and Deimos)','228 million km','Red from iron-rich dust. It has Olympus Mons, the tallest volcano in the solar system, nearly three times the height of Everest.'],
+ Jupiter:['139,820 km across, 11 Earths wide','9 h 56 min','11.9 years','About 97 known','778 million km','More than twice as massive as all the other planets together. Binoculars show its four big moons as tiny stars in a line beside it.'],
+ Saturn:['116,460 km across (without rings)','10 h 33 min','29.5 years','Over 270 known','1.43 billion km','Its rings are mostly ice, wider than 250,000 km but often only about 10 m thick. Even a small telescope shows them.'],
+ Uranus:['50,724 km across, 4 Earths wide','17 h 14 min, on its side','84 years','29 known','2.87 billion km','Tipped over about 98°, so it rolls around the Sun on its side. Just visible to the eye from a very dark site.'],
+ Neptune:['49,244 km across, about 4 Earths wide','16 h 6 min','165 years','16 known','4.5 billion km','The windiest planet, with winds over 2,000 km/h. It was found in 1846 by working out where it had to be before anyone saw it.']};
+const WIKI={};
+async function wikiFor(titles){
+  for(const t of titles){
+    if(!t)continue;
+    if(t in WIKI){if(WIKI[t])return WIKI[t];continue;}
+    try{
+      const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(t.replace(/ /g,'_')));
+      if(r.status===404){WIKI[t]=null;continue;}
+      if(!r.ok)continue;                       // rate limited or down: try again next time
+      const j=await r.json();
+      WIKI[t]=j.type==='standard'&&j.extract?j:null;
+      if(WIKI[t])return j;
+    }catch(e){return null;}                    // offline
+  }
+  return null;
+}
+function wikiTitles(sel){
+  if(sel.kind==='star'){const s=SK[sel.id],[c,l]=s.k.split('_'),m=l.match(/^([a-z])(\d*)$/);
+    const bay=m&&GEN[c]?GRN[m[1]]+(m[2]||'')+' '+GEN[c]:/^\d+$/.test(l)&&GEN[c]?l+' '+GEN[c]:null;
+    return [bay,s.name&&s.name+' (star)',s.name];}
+  if(sel.kind==='planet')return [sel.id==='Mercury'?'Mercury (planet)':sel.id];
+  if(sel.kind==='moon')return ['Moon'];
+  if(sel.kind==='sun')return ['Sun'];
+  if(sel.kind==='con')return [CN[sel.id]+' (constellation)',CN[sel.id]];
+  if(sel.kind==='dso'){const o=DSO.find(d=>d[1]===sel.id),m=o[1].match(/^M(\d+)$/);
+    return [m?'Messier '+m[1]:/^(NGC|IC) \d+$/.test(o[1])?o[1]:null,o[0]];}
+  if(sel.kind==='sat'){const sp=SPECIAL[sel.id];if(sp)return [sp[1].split(',')[0]==='Tiangong'?'Tiangong space station':sp[1]];
+    const s=SATS.find(x=>x.id===sel.id);if(!s)return [];
+    if(/^STARLINK/i.test(s.name))return ['Starlink'];if(/^ONEWEB/i.test(s.name))return ['OneWeb satellite constellation'];
+    return [];}
+  return [];
+}
+const starTemp=bv=>4600*(1/(0.92*bv+1.7)+1/(0.92*bv+0.62));
+const starColour=bv=>bv<0?'Blue-white':bv<0.3?'White':bv<0.6?'Yellow-white':bv<0.85?'Yellow, like the Sun':bv<1.4?'Orange':'Red-orange';
+const fmtN=n=>Math.round(n).toLocaleString('en-US');
+const RANK=STARS.filter(s=>s.mag<2.6).sort((a,b)=>a.mag-b.mag).map(s=>s.k);
+function conOfPoint(ra,dec){let best=null,bd=1e9;const cd=cosd(dec),sd=sind(dec);
+  for(const s of STARS){const c=sd*s.sd+cd*s.cd*cosd(ra-s.ra);const d=Math.acos(clamp(c,-1,1))*R2D;if(d<bd){bd=d;best=s;}}
+  return bd<12?best.c:null;}
+const dsoCon={};for(const o of DSO)dsoCon[o[1]]=conOfPoint(o[2]*15,o[3]);
+function chip(label,sel){return {label,sel};}
+let learnKey=null,pathCache={};
+function relabel(id,txt){$(id).hidden=!txt;if(txt)$(id).textContent=txt;}
+function learn(sel){
+  const key=JSON.stringify(sel);if(learnKey===key)return;learnKey=key;
+  st.follow=false;st.path=false;
+  // actions
+  const pathOK=sel.kind!=='sat'&&sel.kind!=='con';
+  $('aFollow').hidden=sel.kind==='con';$('aPath').hidden=!pathOK;$('aZoom').hidden=sel.kind==='con';
+  markActs();
+  // facts and related things
+  const facts=[],rel=[];let relTitle='';
+  const B=bodies(st.t);
+  if(sel.kind==='star'){const s=SK[sel.id],T=starTemp(s.bv);
+    facts.push(['Colour',starColour(s.bv)]);
+    facts.push(['Surface','about '+fmtN(Math.round(T/100)*100)+' K ('+fmtN(Math.round(((T-273.15)*1.8+32)/100)*100)+' °F)']);
+    const r=RANK.indexOf(s.k);if(r>=0)facts.push(['Rank','#'+(r+1)+' brightest star in the night sky']);
+    if(CN[s.c]){relTitle='Part of';rel.push(chip(CN[s.c],{kind:'con',id:s.c}));}
+    const nb=STARS.filter(o=>o.c===s.c&&o!==s&&o.mag<4).sort((a,b)=>a.mag-b.mag).slice(0,5);
+    for(const o of nb)rel.push(chip(o.name||desig(o.k).replace(/<[^>]+>/g,''),{kind:'star',id:o.k}));}
+  if(sel.kind==='planet'){const f=PF[sel.id],b=B.pl[sel.id];
+    if(f){facts.push(['Size',f[0]],['Spins once in',f[1]],['Year',f[2]],['Moons',f[3]],['From the Sun',f[4]+' on average']);}
+    facts.push(['From us now',fmtN(b.dist*149.6)+' million km'],['Its light left','about '+Math.round(b.dist*8.317)+' minutes ago']);
+    if(f)facts.push(['Good to know',f[5]]);
+    relTitle='Other planets';for(const n of Object.keys(PF))if(n!==sel.id)rel.push(chip(n,{kind:'planet',id:n}));
+    rel.push(chip('The Moon',{kind:'moon'}));}
+  if(sel.kind==='moon'){const m=B.moon,syn=29.5306,day=864e5,ageD=m.age/360*syn;   // m.age is the Moon–Sun angle in degrees
+    const full=st.t+((syn/2-ageD+syn)%syn)*day,nw=st.t+((syn-ageD)%syn)*day;
+    facts.push(['Age','Day '+(Math.floor(ageD)+1)+' of its 29½-day cycle'],['Next full moon','around '+fDay.format(new Date(full))],['Next new moon','around '+fDay.format(new Date(nw))],
+      ['Size','3,474 km across, about a quarter of Earth'],['Its light left','about '+(m.dist*6378/299792).toFixed(2)+' seconds ago'],
+      ['Good to know','It always shows us the same face. The dark “seas” are old lava plains; binoculars show craters along the line between light and dark.']);
+    relTitle='Planets';for(const n of Object.keys(PF))rel.push(chip(n,{kind:'planet',id:n}));}
+  if(sel.kind==='sun')facts.push(['Size','1.39 million km across, 109 Earths wide'],['Age','about 4.6 billion years'],['Surface','about 5,500 °C (9,900 °F)'],['Its light left','about 8 minutes 20 seconds ago']);
+  if(sel.kind==='dso'){const o=DSO.find(d=>d[1]===sel.id);
+    facts.push(['Type',DTYPE[o[4]]],['Seeing it',DEYE[o[5]][0].toUpperCase()+DEYE[o[5]].slice(1)]);
+    const c=dsoCon[o[1]];if(c&&CN[c]){relTitle='In';rel.push(chip(CN[c],{kind:'con',id:c}));
+      for(const d of DSO)if(d!==o&&dsoCon[d[1]]===c)rel.push(chip(d[0]===d[1]?d[1]:d[0],{kind:'dso',id:d[1]}));}}
+  if(sel.kind==='con'){
+    const mem=STARS.filter(s=>s.c===sel.id).sort((a,b)=>a.mag-b.mag);
+    facts.push(['Stars drawn',String(mem.length)],['Brightest',mem[0].name||desig(mem[0].k).replace(/<[^>]+>/g,'')]);
+    relTitle='Stars and sights in it';
+    for(const s of mem.slice(0,8))rel.push(chip(s.name||desig(s.k).replace(/<[^>]+>/g,''),{kind:'star',id:s.k}));
+    for(const d of DSO)if(dsoCon[d[1]]===sel.id)rel.push(chip(d[0]===d[1]?d[1]:d[0],{kind:'dso',id:d[1]}));}
+  if(sel.kind==='sat'){const s=SATS.find(x=>x.id===sel.id);
+    if(s&&/rocket body/.test(s.name))facts.push(['What it is','A spent rocket stage left in orbit after a launch. Big, shiny and tumbling, these often flash as they pass.']);
+    else if(s&&!SPECIAL[sel.id]&&!/^STARLINK|^ONEWEB/i.test(s.name))facts.push(['What it is','One of the brightest satellites, bright enough to see by eye when it catches the sunlight after dark.']);}
+  $('iFacts').innerHTML='';for(const [k,v] of facts){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v;$('iFacts').append(dt,dd);}
+  $('iFactsH').hidden=!facts.length;
+  relabel('iRelH',rel.length?relTitle:'');
+  $('iRel').innerHTML='';for(const c of rel){const b=document.createElement('button');b.type='button';b.textContent=c.label;b.addEventListener('click',()=>selectObj(c.sel));$('iRel').append(b);}
+  // picture and story
+  $('iFig').hidden=true;$('iSumWrap').hidden=true;$('iSrc').hidden=true;$('iSum').classList.remove('open');
+  wikiFor(wikiTitles(sel)).then(j=>{
+    if(learnKey!==key||!j)return;
+    if(j.thumbnail&&j.thumbnail.source){const img=$('iImg');img.onerror=()=>{$('iFig').hidden=true;};img.src=j.thumbnail.source;img.alt=j.title;$('iFig').hidden=false;}
+    $('iSum').textContent=j.extract;$('iSumWrap').hidden=false;
+    requestAnimationFrame(()=>{const p=$('iSum');$('iSumMore').hidden=p.scrollHeight<=p.clientHeight+2;});
+    const a=document.createElement('a');a.href=(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||('https://en.wikipedia.org/wiki/'+encodeURIComponent(j.title));a.target='_blank';a.rel='noopener';a.textContent='Wikipedia';
+    $('iSrc').replaceChildren('Picture and text from ',a,' ↗');$('iSrc').hidden=false;
+  });
+}
+$('iSumMore').addEventListener('click',()=>{const p=$('iSum');p.classList.toggle('open');$('iSumMore').textContent=p.classList.contains('open')?'Show less':'Read more';});
+function conCentre(c){let x=0,y=0,z=0;for(const s of STARS)if(s.c===c){x+=s.cd*cosd(s.ra);y+=s.cd*sind(s.ra);z+=s.sd;}
+  const L=Math.hypot(x,y,z)||1;return [atan2d(y,x),Math.asin(z/L)*R2D];}
+function selectObj(sel){
+  st.sel=sel;infoKey=null;
+  if(sel.kind==='con'){const [ra,dec]=conCentre(sel.id),v=hv(rev(ra),dec,lstOf(st.t));aim(sel,azOfV(v),altOfV(v));}
+  else aim(sel);
+  need=true;
+}
+function markActs(){$('aFollow').setAttribute('aria-pressed',String(!!st.follow));$('aPath').setAttribute('aria-pressed',String(!!st.path));}
+function stopFollow(){if(st.follow){st.follow=false;markActs();}}
+function followStep(){
+  const B=bodies(st.t),l=lstOf(st.t),v=selVec(st.sel,B,l,moonVec(B,l),hv(B.sun.ra,B.sun.dec,l));if(!v)return;
+  const alt=altOfV(v);if(alt<-2)return;
+  st.dome=false;st.vaz=azOfV(v);st.valt=alt>3?clamp(alt,8,85):10;markViews();
+}
+function pathOf(sel){
+  const key=JSON.stringify(sel)+st.night.key;if(pathCache[key])return pathCache[key];
+  const out=[];
+  for(let i=0;i<=144;i++){const t=st.night.noon+i*600000,B=bodies(t),l=lstOf(t);
+    const v=selVec(sel,B,l,moonVec(B,l),hv(B.sun.ra,B.sun.dec,l));
+    const night=sel.kind==='sun'||st.ni.S[i].sun<-0.8;
+    out.push({t,v,night,lab:i%12===0});}
+  return pathCache[key]=out;
+}
+function drawPath(P){
+  if(!st.path||!st.sel)return;
+  const pts=pathOf(st.sel);
+  ctx.save();ctx.strokeStyle='rgba(255,212,140,.75)';ctx.lineWidth=1.6;ctx.setLineDash([5,5]);ctx.beginPath();
+  let pen=false;
+  for(const q of pts){if(!q.v||!q.night||q.v[2]<0){pen=false;continue;}const p=P(q.v);if(!p){pen=false;continue;}if(pen)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);pen=true;}
+  ctx.stroke();ctx.setLineDash([]);ctx.font='500 12px Jost,system-ui,sans-serif';ctx.textAlign='left';
+  for(const q of pts){if(!q.lab||!q.v||!q.night||q.v[2]<0.02)continue;const p=P(q.v);if(!onScr(p,0))continue;
+    ctx.fillStyle='rgba(255,212,140,.95)';ctx.beginPath();ctx.arc(p[0],p[1],3,0,7);ctx.fill();
+    ctx.fillStyle='rgba(255,226,180,.9)';ctx.fillText(tm(q.t),p[0]+6,p[1]-6);}
+  ctx.restore();
+}
+$('aCenter').addEventListener('click',()=>{if(st.sel){skyOff();selectObj(st.sel);}});
+$('aFollow').addEventListener('click',()=>{if(!st.sel)return;const on=!st.follow;skyOff();st.follow=on;markActs();if(on){followStep();need=true;toast('Following it as time moves. Drag the sky to stop.');}});
+$('aPath').addEventListener('click',()=>{if(!st.sel)return;st.path=!st.path;markActs();need=true;if(st.path)toast('Dashed line: where it goes tonight, with times');});
+$('aZoom').addEventListener('click',()=>{if(!st.sel)return;skyOff();aim(st.sel);st.fov=st.sel.kind==='planet'||st.sel.kind==='moon'?18:st.sel.kind==='dso'?25:35;need=true;});
+
+
 function riseSet(sel){
   const key=JSON.stringify(sel)+st.night.key;if(riseCache[key])return riseCache[key];
   const thr=sel.kind==='moon'||sel.kind==='sun'?-0.833:-0.5,S=[];
@@ -1957,7 +2151,8 @@ function satInfo(sel,sunAlt){
 }
 function updateInfo(B,lst,mv,sunV){
   const box=$('info'),sel=st.sel;
-  if(!sel){box.hidden=true;return;}
+  if(!sel){box.hidden=true;learnKey=null;st.follow=false;st.path=false;return;}
+  learn(sel);
   if(sel.kind==='sat')return satInfo(sel,altOfV(sunV));
   if(sel.kind==='con'){
     box.hidden=false;const k=JSON.stringify(sel);if(infoKey===k)return;infoKey=k;
@@ -1998,7 +2193,7 @@ $('iGo').addEventListener('click',()=>{if(goTarget)goWatch(goTarget);});
 const ptrs=new Map();let pinch=null,moved=0,hintGone=false;
 function hideHint(){if(!hintGone){hintGone=true;$('hint').style.opacity=0;}}
 function setFov(f){st.fov=clamp(f,15,140);need=true;}
-function setDome(on){st.dome=on;if(on){st.vaz=HOMEAZ;st.valt=90;}markViews();need=true;}
+function setDome(on){if(on)stopFollow();st.dome=on;if(on){st.vaz=HOMEAZ;st.valt=90;}markViews();need=true;}
 function markViews(){const fd=$('fDir');if(fd)fd.textContent=st.dome?'Up':DIRS[Math.round(rev(st.vaz)/45)%8*2];for(const id of ['vN','vE','vS','vW','vZ'])$(id).classList.remove('on');if(st.dome)$('vZ').classList.add('on');else{const m={0:'vN',90:'vE',180:'vS',270:'vW'};const a=Math.round(rev(st.vaz)/90)*90%360;if(Math.abs(((rev(st.vaz)-a+540)%360)-180)<12)$(m[a]).classList.add('on');}}
 let ptrType='mouse';
 cv.addEventListener('pointerdown',e=>{ptrType=e.pointerType;cv.setPointerCapture(e.pointerId);$('q').blur();ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;hideHint();
@@ -2033,7 +2228,7 @@ $('tleGo').addEventListener('click',()=>{const txt=$('tleIn').value,l=parseTLE(t
     const B=bodies(st.t),l=lstOf(st.t),mv=moonVec(B,l),sv=hv(B.sun.ra,B.sun.dec,l);
     ul.innerHTML=res.map((e,i)=>{let stt='';if(e.sel.kind!=='con'){const v=selVec(e.sel,B,l,mv,sv);if(v){const a=altOfV(v);stt=a>0?'<em class="up">Up now · '+dirOf(azOfV(v))+'</em>':'<em>Below horizon</em>';}}
       return '<li><button type="button" data-i="'+i+'"><b>'+esc(e.label)+'</b><small>'+esc(e.sub)+'</small>'+stt+'</button></li>';}).join('');ul.hidden=false;paint();};
-  const choose=e=>{if(!e)return;skyOff();closeSheetOnPhone();st.sel=e.sel;infoKey=null;aim(e.sel);ul.hidden=true;q.value='';q.blur();hideHint();};
+  const choose=e=>{if(!e)return;skyOff();closeSheetOnPhone();selectObj(e.sel);ul.hidden=true;q.value='';q.blur();hideHint();};
   q.addEventListener('input',render);q.addEventListener('focus',render);
   q.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){act=Math.min(act+1,res.length-1);paint();e.preventDefault();}else if(e.key==='ArrowUp'){act=Math.max(act-1,0);paint();e.preventDefault();}else if(e.key==='Enter'){choose(res[act]);e.preventDefault();}else if(e.key==='Escape'){ul.hidden=true;q.blur();}});
   ul.addEventListener('pointerdown',e=>e.preventDefault());
@@ -2147,14 +2342,14 @@ async function findPlace(q){
   }
   res=res.slice(0,8);
   if(!res.length){locMsg('No places called “'+city+'”. Try a nearby town, or type coordinates.');return;}
-  if(res.length===1)return pick(res[0]);
+  if(res.length===1)return pickPlace(res[0]);
   locMsg('Which one?');
   const ul=$('locRes');
   res.forEach(r=>{const li=document.createElement('li'),b=document.createElement('button');b.type='button';
     b.textContent=placeName(r);const sm=document.createElement('small');sm.textContent=coordTxt(r.latitude,r.longitude)+(r.population?' · pop. '+r.population.toLocaleString('en-US'):'');b.append(sm);
-    b.addEventListener('click',()=>pick(r));li.append(b);ul.append(li);});
+    b.addEventListener('click',()=>pickPlace(r));li.append(b);ul.append(li);});
 }
-function pick(r){locMsg('Opening the sky over '+placeName(r)+'…');setLoc({lat:+r.latitude.toFixed(4),lon:+r.longitude.toFixed(4),tz:r.timezone,name:placeName(r),src:'search'});}
+function pickPlace(r){locMsg('Opening the sky over '+placeName(r)+'…');setLoc({lat:+r.latitude.toFixed(4),lon:+r.longitude.toFixed(4),tz:r.timezone,name:placeName(r),src:'search'});}
 $('locBtn').addEventListener('click',()=>{locMsg('');$('locRes').innerHTML='';$('locQ').value='';dlg.showModal();});
 $('locGPS').addEventListener('click',()=>useGPS(true));
 $('locForm').addEventListener('submit',async e=>{
@@ -2181,8 +2376,8 @@ $('fZen').addEventListener('click',()=>{skyOff();if(st.dome){st.dome=false;st.va
 
 // sky mode: aim the view with the phone's motion sensors
 let sky=null;
-function skyOff(){if(!sky)return;window.removeEventListener(sky.ev,sky.h);try{sky.lock&&sky.lock.release();}catch(e){}sky=null;$('fSky').classList.remove('on');$('fSky').setAttribute('aria-pressed','false');}
-async function skyOn(){
+function skyOff(){stopFollow();if(!sky)return;window.removeEventListener(sky.ev,sky.h);try{sky.lock&&sky.lock.release();}catch(e){}sky=null;$('fSky').classList.remove('on');$('fSky').setAttribute('aria-pressed','false');}
+async function skyOn(){stopFollow();
   const DOE=window.DeviceOrientationEvent;
   if(DOE&&typeof DOE.requestPermission==='function'){try{if(await DOE.requestPermission()!=='granted'){toast('Motion access was turned down. You can allow it in your browser’s settings.');return;}}catch(e){toast('This browser won’t share motion on this page.');return;}}
   const ev='ondeviceorientationabsolute' in window?'deviceorientationabsolute':'deviceorientation';
@@ -2216,7 +2411,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{need=true
 let last=0;
 function loop(ts){
   if(st.play&&last){st.t+=(ts-last)*st.speed;syncTime();}
-  last=ts;if(need){need=false;draw();}
+  last=ts;if(need){if(st.follow&&st.sel)followStep();need=false;draw();}
   requestAnimationFrame(loop);
 }
 syncTime();markViews();requestAnimationFrame(loop);
