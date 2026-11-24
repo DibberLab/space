@@ -1,7 +1,7 @@
 {
-  "name": "Siren Night Sky",
-  "short_name": "Siren Sky",
-  "description": "The night sky over Siren, Wisconsin, with live satellites.",
+  "name": "Sedna",
+  "short_name": "Sedna",
+  "description": "The night sky from wherever you are, with live satellites.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

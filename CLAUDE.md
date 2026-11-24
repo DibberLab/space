@@ -1,6 +1,6 @@
-# Siren Night Sky (space.dibberlab.me)
+# Sedna (space.dibberlab.me)
 
-An interactive night-sky explorer for Siren, Wisconsin. It's a **static site with no build step**: everything lives in `site/`. Live at **https://space.dibberlab.me**. Site name on the droplet: `space`.
+An interactive night-sky explorer for any place on Earth, named for the dwarf planet Sedna. (It started as "Siren Night Sky", fixed to Siren, Wisconsin; old localStorage keys still say `siren-`, keep them so returning visitors keep their settings.) It's a **static site with no build step**: everything lives in `site/`. Live at **https://space.dibberlab.me**. Site name on the droplet: `space`.
 
 ## Layout
 
@@ -11,8 +11,8 @@ site/                         the entire website (nginx's web root)
   favicon.svg, apple-touch-icon.png, icon-192.png, icon-512.png, manifest.webmanifest
                               "Add to Home Screen" app support
 scripts/update-tle.sh         refreshes orbits from CelesTrak (no arg: site/data/visual.tle; or a target path)
-scripts/build-from-artifact.py  regenerates site/index.html from the single-file claude.ai artifact version,
-                              if Andrew hands you a newer one
+scripts/build-from-artifact.py  built site/index.html from the original single-file Siren artifact. Out of date:
+                              running it would undo the Sedna name and the location picker
 deploy/space.nginx.conf       nginx site
 deploy/space-tle.cron         orbit refresh every 8 hours (installed as /etc/cron.d/space-tle)
 deploy/space-deploy.sh        server-side deploy (installed as /usr/local/bin/space-deploy)
@@ -24,11 +24,14 @@ THIRD_PARTY.md
 ## How it works (things not to break)
 
 - No bundler, no npm install. Don't add a build step unless asked.
-- The page needs only Google Fonts from outside. It reads `data/visual.tle` by a **relative path**, so `site/` must stay the web root.
+- The page needs only Google Fonts and Open-Meteo (location search) from outside. It reads `data/visual.tle` by a **relative path**, so `site/` must stay the web root.
 - Orbits go stale after 1–2 weeks. On the droplet, cron runs `/usr/local/bin/space-update-tle` as www-data every 8 hours, writing `/var/lib/space/data/visual.tle` (outside the checkout, so `git pull` never conflicts). nginx serves that file at `/data/visual.tle` and falls back to the repo's `site/data/visual.tle`. If both are stale the page falls back to orbits embedded in `index.html` (Nov 23, 2026).
 - CelesTrak policy: don't download the same group more than every 2 hours.
 - Mobile-first: on phones the sky fills the screen with a bottom sheet. **Sky mode** (point the phone at the sky) uses the device-orientation API, which needs HTTPS; iOS asks for motion permission when the button is tapped. Test it on a real phone after deploying.
-- Observer location and time zone are constants at the top of the main script in `index.html` (`LAT`, `LON`, `TZ`).
+- **Location.** A small script before the app sets `window.SKYLOC` = `{lat, lon, tz, name, src}`, from (in order) `?lat=&lon=[&tz=&name=]` in the address, the saved choice in localStorage `sky-loc`, or the Siren, WI default. The app reads it once into `LAT`, `LON`, `TZ`; picking a new place saves it and reloads the page (much simpler than recomputing everything live). On a first visit, and whenever the saved choice is "Your location", the page asks the browser for its position and reloads if it moved more than 5 km. A typed place or coordinates is never overridden.
+- Place search and time zones use Open-Meteo (no key): `geocoding-api.open-meteo.com` for "city, state" (the state or country after the comma filters the matches) and `api.open-meteo.com` with `timezone=auto` for typed coordinates (falls back to a rough `Etc/GMT±N` zone if that fails). Your location uses the browser's own time zone.
+- Southern-hemisphere aware: the default view faces the equator (north when `LAT<0`), and the "never rises"/"circumpolar" notes flip.
+- Playback starts at 1 min/s (Andrew likes seeing things move). **Live** and "watch a pass" deliberately run in real time so the screen matches the real sky (Sky mode depends on that).
 
 ## Hosting
 
@@ -49,7 +52,7 @@ Deploys and DibberLab-wide rules: see `amcmorrow/dibberlab-infra` (its `CLAUDE.m
 ```bash
 python3 -m http.server 8080 -d site
 ```
-Open http://localhost:8080 at desktop and phone (390px) widths and check: the sky draws, search works (try "m31", "iss"), no console errors, and the side panel's "Satellite orbits: from <date>" matches `data/visual.tle`.
+Open http://localhost:8080 at desktop and phone (390px) widths and check: the sky draws, search works (try "m31", "iss"), the location picker finds "Duluth, MN" and "46.79, -92.10", no console errors, and the side panel's "Satellite orbits: from <date>" matches `data/visual.tle`.
 
 ## After deploying, verify
 

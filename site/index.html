@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#060a14">
-<title>Siren Night Sky</title>
-<meta name="description" content="An interactive night sky for Siren, Wisconsin: stars, planets, the Moon, deep-sky objects and live satellites for any date and time.">
-<meta property="og:title" content="Siren Night Sky">
-<meta property="og:description" content="Explore the sky over Siren, Wisconsin for any night, with live satellites.">
+<title>Sedna</title>
+<meta name="description" content="An interactive night sky for wherever you are: stars, planets, the Moon, deep-sky objects and live satellites for any place, date and time.">
+<meta property="og:title" content="Sedna">
+<meta property="og:description" content="Explore the night sky from anywhere on Earth, any night, with live satellites.">
 <meta property="og:url" content="https://space.dibberlab.me/">
 <meta property="og:type" content="website">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Siren Sky">
+<meta name="apple-mobile-web-app-title" content="Sedna">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -36,6 +36,28 @@ button,select,input,textarea{font:inherit;color:inherit}
 .top{grid-area:top;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:12px max(16px,2vw);border-bottom:1px solid var(--line);background:var(--panel)}
 h1{font-size:30px;line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:500}
 h1 small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-weight:400;margin-top:3px}
+.brand{display:flex;flex-direction:column;align-items:flex-start}
+.locbtn{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;margin:3px 0 0 -4px;padding:2px 6px;border:1px solid transparent;border-radius:8px;background:none;color:var(--mute);font-size:14px;cursor:pointer;text-align:left}
+.locbtn svg{flex:none;color:var(--acc2)}
+.locbtn:hover{border-color:var(--line);color:var(--ink)}
+.locbtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#locName{color:var(--ink)}
+#locCoords::before{content:"· "}
+.locchg{color:var(--acc);margin-left:4px}
+#locDlg{width:min(440px,calc(100% - 32px));max-height:calc(100svh - 48px);overflow-y:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#locDlg::backdrop{background:rgba(2,4,10,.7)}
+#locDlg h2{margin:0 36px 14px 0;font-size:20px;font-weight:500;line-height:1.2}
+#locDlg label{display:block;margin:16px 0 6px;color:var(--mute);font-size:14px}
+.locx{position:absolute;top:8px;right:8px;width:40px;height:40px;border:0;border-radius:10px;background:none;color:var(--mute);font-size:24px;cursor:pointer}
+.locgps{display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.locrow{display:flex;gap:8px}
+#locQ{flex:1;min-height:40px;padding:6px 12px;border-radius:10px;border:1px solid var(--line);background:#0e1628;color:var(--ink);font-size:16px}
+#locMsg{margin:10px 0 0;color:var(--mute);font-size:14px;min-height:1em}
+#locMsg:empty{display:none}
+#locRes{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+#locRes button{width:100%;text-align:left;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#111a2e;cursor:pointer;line-height:1.3}
+#locRes button:hover{border-color:var(--acc2)}
+#locRes small{display:block;color:var(--mute);font-size:13px}
 #when{flex:1 1 260px;font-size:16px}
 #when b{font-weight:500}
 #state{color:var(--mute);display:block;font-size:14px}
@@ -133,6 +155,12 @@ html,body{overflow:hidden;overscroll-behavior:none}
 .top{position:absolute;top:0;left:0;right:0;z-index:20;display:block;border:0;background:linear-gradient(rgba(6,10,20,.96),rgba(6,10,20,.9) 72%,rgba(6,10,20,0));padding:calc(env(safe-area-inset-top) + 10px) max(12px,env(safe-area-inset-right)) 18px max(12px,env(safe-area-inset-left));pointer-events:none}
 .top>*{pointer-events:auto}
 h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.top{display:flex;flex-direction:column;align-items:stretch}
+.top>*{flex:none}
+.search{order:1}
+.brand{order:2;margin:6px 0 0}
+#when{order:3}
+.locbtn{margin:0;font-size:13px;background:rgba(6,10,20,.6)}
 .search{max-width:none}
 .views{display:none}
 #when{margin:6px 4px 0;font-size:14px;line-height:1.3;pointer-events:none}
@@ -184,7 +212,10 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
 <body>
 <div id="app">
   <header class="top" id="top">
-    <h1>Siren night sky<small>45.79° N, 92.38° W · Burnett County, Wisconsin</small></h1>
+    <div class="brand">
+      <h1>Sedna</h1>
+      <button class="locbtn" id="locBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-6.5-6.1-6.5-11A6.5 6.5 0 0 1 18.5 10c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span id="locName">—</span><span id="locCoords"></span><span class="locchg">Change</span></button>
+    </div>
     <div class="search">
       <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="Search stars, planets, galaxies, satellites" aria-label="Search the sky">
       <ul id="results" hidden></ul>
@@ -200,7 +231,7 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
   </header>
 
   <div id="stage">
-    <canvas id="sky" aria-label="Simulated sky over Siren, Wisconsin"></canvas>
+    <canvas id="sky" aria-label="Simulated night sky"></canvas>
     <div id="info" hidden>
       <button id="infoX" aria-label="Close">×</button>
       <h3 id="iName"></h3>
@@ -229,8 +260,8 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
       <span id="clock">—</span>
       <select id="speed" aria-label="Playback speed">
         <option value="1">Real time</option>
-        <option value="60">1 min/s</option>
-        <option value="600" selected>10 min/s</option>
+        <option value="60" selected>1 min/s</option>
+        <option value="600">10 min/s</option>
         <option value="3600">1 hr/s</option>
       </select>
       <button class="btn" id="now" title="Jump to right now and run in real time">Live</button>
@@ -256,7 +287,7 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
         </div>
       </div>
       <aside class="pane" id="pTonight" aria-label="Tonight">
-        <h2>Tonight from Siren</h2>
+        <h2>Tonight from <span id="locShort">here</span></h2>
         <p id="nightDate"></p>
         <dl class="facts" id="facts"></dl>
         <div class="moonline"><canvas id="moonIcon" width="44" height="44"></canvas><div id="moonTxt"></div></div>
@@ -270,13 +301,24 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
           <textarea id="tleIn" aria-label="Paste satellite orbits (TLE)"></textarea>
           <button class="btn" id="tleGo">Use these orbits</button><span id="tleMsg"></span>
         </details>
-        <p class="note">Positions are worked out in your browser from orbital elements and a bright-star catalog, accurate to a fraction of a degree. Satellites use the standard SGP4 model with orbits from CelesTrak. The Moon and planets are drawn larger and brighter than life; set Exaggeration to zero for something closer to true size. The faint speckle inside the Milky Way is texture, not catalogued stars. The treeline is made up to suggest the northwoods. It isn't a survey of any real shoreline.</p>
+        <p class="note">Positions are worked out in your browser from orbital elements and a bright-star catalog, accurate to a fraction of a degree. Satellites use the standard SGP4 model with orbits from CelesTrak. The Moon and planets are drawn larger and brighter than life; set Exaggeration to zero for something closer to true size. The faint speckle inside the Milky Way is texture, not catalogued stars. The treeline is made up to suggest the northwoods. It isn't a survey of any real shoreline. Places and time zones come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>. Named for Sedna, a small, very red world far beyond Neptune that takes about 11,000 years to circle the Sun.</p>
       </aside>
     </div>
   </section>
 </div>
 <div id="redov"></div>
 <div id="toast" role="status" hidden></div>
+<dialog id="locDlg" aria-labelledby="locTitle">
+  <form method="dialog"><button class="locx" aria-label="Close">×</button></form>
+  <h2 id="locTitle">Where are you looking from?</h2>
+  <button class="btn locgps" id="locGPS" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>Use my location</button>
+  <form id="locForm">
+    <label for="locQ">Or type a city and state, or GPS coordinates</label>
+    <div class="locrow"><input id="locQ" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" placeholder="Duluth, MN   or   46.79, -92.10"><button class="btn" type="submit">Find</button></div>
+  </form>
+  <p id="locMsg" role="status"></p>
+  <ul id="locRes"></ul>
+</dialog>
 
 <script>
 /*!
@@ -290,9 +332,21 @@ body.sheet-open #info,body.sheet-open #hint{display:none}
 
 </script>
 <script>
+/* LOCATION: the spot on Earth the sky is drawn for. Picked before the app runs:
+   ?lat=&lon=[&tz=&name=] in the address, else the saved choice, else Siren, WI until
+   the browser shares its location. Changing it saves and reloads (see "location" below). */
+window.SKYLOC=(function(){
+  function ok(l){try{return !!l&&typeof l.name==='string'&&isFinite(l.lat)&&isFinite(l.lon)&&Math.abs(l.lat)<=90&&Math.abs(l.lon)<=180&&!!new Intl.DateTimeFormat('en-US',{timeZone:l.tz});}catch(e){return false;}}
+  try{var q=new URLSearchParams(location.search);if(q.has('lat')&&q.has('lon')){var la=+q.get('lat'),lo=+q.get('lon');
+    var u={lat:la,lon:lo,tz:q.get('tz')||Intl.DateTimeFormat().resolvedOptions().timeZone,name:q.get('name')||'Coordinates',src:'link'};if(ok(u))return u;}}catch(e){}
+  try{var s=JSON.parse(localStorage.getItem('sky-loc')||'null');if(ok(s))return s;}catch(e){}
+  return {lat:45.7855,lon:-92.3810,tz:'America/Chicago',name:'Siren, Wisconsin',src:'default'};
+})();
+</script>
+<script>
 {
 /*ASTRO*/
-const LAT=45.7855, LON=-92.3810, TZ='America/Chicago';
+const LAT=SKYLOC.lat, LON=SKYLOC.lon, TZ=SKYLOC.tz;
 const D2R=Math.PI/180, R2D=180/Math.PI;
 const sind=x=>Math.sin(x*D2R), cosd=x=>Math.cos(x*D2R), atan2d=(y,x)=>Math.atan2(y,x)*R2D;
 const rev=x=>((x%360)+360)%360, clamp=(x,a,b)=>x<a?a:x>b?b:x;
@@ -822,7 +876,7 @@ M3|M3|13.703|28.38|GC|b
 M4|M4|16.393|-26.53|GC|b|One of the closest globular clusters, beside Antares.
 M5|M5|15.310|2.08|GC|b
 M6|Butterfly Cluster|17.668|-32.25|OC|b
-M7|Ptolemy Cluster|17.898|-34.82|OC|e|Low in the south from Siren, above Scorpius’s stinger.
+M7|Ptolemy Cluster|17.898|-34.82|OC|e|Low in the south from mid-northern latitudes, above Scorpius’s stinger.
 M8|Lagoon Nebula|18.063|-24.38|N|b|A glowing gas cloud visible to the eye from a dark site.
 M9|M9|17.320|-18.52|GC|t
 M10|M10|16.952|-4.10|GC|b
@@ -939,7 +993,7 @@ B33|Horsehead Nebula|5.683|-2.46|N|t
 NGC 2237|Rosette Nebula|6.530|5.00|N|t
 NGC 2392|Eskimo Nebula|7.486|20.91|PN|t
 NGC 253|Sculptor Galaxy|0.793|-25.29|G|b
-NGC 5139|Omega Centauri|13.447|-47.48|GC|e|The biggest globular cluster in our galaxy. It barely clears the horizon from Siren, if at all.
+NGC 5139|Omega Centauri|13.447|-47.48|GC|e|The biggest globular cluster in our galaxy. From mid-northern latitudes it barely clears the horizon, if at all.
 LMC|Large Magellanic Cloud|5.392|-69.76|G|e|A satellite galaxy of the Milky Way, only visible from the Southern Hemisphere.
 SMC|Small Magellanic Cloud|0.877|-72.83|G|e|A satellite galaxy of the Milky Way, only visible from the Southern Hemisphere.
 Sgr A*|Galactic Center|17.761|-29.01|BH|t|The heart of the Milky Way and its 4-million-Sun black hole, 26,000 light-years away behind dust.
@@ -1612,7 +1666,8 @@ function search(q){
 const $=id=>document.getElementById(id);
 const cv=$('sky'), ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1,need=true,hits=[],placed=[],firstSize=true;
-const st={t:Date.now(),vaz:180,valt:28,fov:100,dome:false,ex:0.35,play:false,speed:600,sel:null,night:null,ni:null,
+const HOMEAZ=LAT<0?0:180;
+const st={t:Date.now(),vaz:HOMEAZ,valt:28,fov:100,dome:false,ex:0.35,play:false,speed:60,sel:null,night:null,ni:null,
   tog:{lines:true,names:true,stars:true,planets:true,sats:true,mw:true,dso:false,ecl:false,grid:false,outer:true}};
 {const B=bodies(st.t);const sa=altOfV(hv(B.sun.ra,B.sun.dec,lstOf(st.t)));if(sa>-6){const p=parts(st.t);st.t=zoned(p.year,p.month,p.day,21,0);}}
 
@@ -1651,7 +1706,7 @@ function renderNight(){
     (e.ok?'Best '+tm(e.best)+', '+Math.round(e.alt)+'° up in the '+DIRW[dirOf(e.az)]+'. Visible '+tm(e.from)+'–'+tm(e.to)+'.':e.why)+'</span></button>').join('');
   const pr=[];for(const id of [25544,48274]){const s=SATS.find(x=>x.id===id);if(s)for(const p of passes(s))pr.push([s,p]);}
   pr.sort((a,b)=>a[1].start-b[1].start);st.passList=pr;
-  $('passes').innerHTML=(pr.length?pr.map(([s,p],i)=>'<button class="pl" data-pass="'+i+'"><i style="background:#fff"></i><b>'+esc(s.name)+' · '+tm(p.start)+'</b><span>Appears in the '+DIRW[dirOf(p.saz)]+', peaks '+Math.round(p.max)+'° up in the '+DIRW[dirOf(p.maz)]+', gone by '+tm(p.end)+' in the '+DIRW[dirOf(p.eaz)]+'.</span></button>').join(''):'<p class="note" style="margin:4px 0">No visible passes of the ISS or Tiangong tonight.</p>')+'<p class="note" style="margin:6px 0 0">Hubble only skims the southern horizon from Siren’s latitude. Search any satellite to see its passes.</p>';
+  $('passes').innerHTML=(pr.length?pr.map(([s,p],i)=>'<button class="pl" data-pass="'+i+'"><i style="background:#fff"></i><b>'+esc(s.name)+' · '+tm(p.start)+'</b><span>Appears in the '+DIRW[dirOf(p.saz)]+', peaks '+Math.round(p.max)+'° up in the '+DIRW[dirOf(p.maz)]+', gone by '+tm(p.end)+' in the '+DIRW[dirOf(p.eaz)]+'.</span></button>').join(''):'<p class="note" style="margin:4px 0">No visible passes of the ISS or Tiangong tonight.</p>')+'<p class="note" style="margin:6px 0 0">'+(Math.abs(LAT)>40?'Hubble only skims the '+(LAT>0?'southern':'northern')+' horizon this far from the equator. ':'')+'Search any satellite to see its passes.</p>';
   showTleAge();
   $('slider').style.background='linear-gradient(90deg,'+ni.S.map((s,i)=>skyBand(s.sun)+' '+(i/144*100).toFixed(2)+'%').join(',')+')';
 }
@@ -1922,8 +1977,8 @@ function updateInfo(B,lst,mv,sunV){
   if(sel.kind==='dso'){const o=DSO.find(d=>d[1]===sel.id);dec=o[3];name=esc(o[0]);sub=(o[0]!==o[1]?esc(o[1])+' · ':'')+DTYPE[o[4]];rows.push(['Seeing it',DEYE[o[5]][0].toUpperCase()+DEYE[o[5]].slice(1)]);if(o[6])rows.push(['About',esc(o[6])]);}
   rows.unshift(['Right now',pos]);
   const rs=riseSet(sel);
-  if(dec!=null&&dec<LAT-90)rows.push(['From Siren','Too far south: it never rises here']);
-  else if(rs.allUp)rows.push(['Tonight',dec!=null&&dec>90-LAT?'Circumpolar: up all night, every night':'Above the horizon all night']);
+  if(dec!=null&&(LAT>=0?dec<LAT-90:dec>LAT+90))rows.push(['From here','Too far '+(LAT>=0?'south':'north')+': it never rises here']);
+  else if(rs.allUp)rows.push(['Tonight',dec!=null&&(LAT>=0?dec>90-LAT:dec<-90-LAT)?'Circumpolar: up all night, every night':'Above the horizon all night']);
   else if(rs.allDown)rows.push(['Tonight','Stays below the horizon']);
   else{if(rs.rise)rows.push(['Rises',tm(rs.rise)]);if(rs.mx[1]>0)rows.push(['Highest',tm(rs.mx[0])+', '+Math.round(rs.mx[1])+'° up']);if(rs.set)rows.push(['Sets',tm(rs.set)]);}
   $('iName').innerHTML=name;$('iSub').innerHTML=sub;showRows(rows);
@@ -1943,7 +1998,7 @@ $('iGo').addEventListener('click',()=>{if(goTarget)goWatch(goTarget);});
 const ptrs=new Map();let pinch=null,moved=0,hintGone=false;
 function hideHint(){if(!hintGone){hintGone=true;$('hint').style.opacity=0;}}
 function setFov(f){st.fov=clamp(f,15,140);need=true;}
-function setDome(on){st.dome=on;if(on){st.vaz=180;st.valt=90;}markViews();need=true;}
+function setDome(on){st.dome=on;if(on){st.vaz=HOMEAZ;st.valt=90;}markViews();need=true;}
 function markViews(){const fd=$('fDir');if(fd)fd.textContent=st.dome?'Up':DIRS[Math.round(rev(st.vaz)/45)%8*2];for(const id of ['vN','vE','vS','vW','vZ'])$(id).classList.remove('on');if(st.dome)$('vZ').classList.add('on');else{const m={0:'vN',90:'vE',180:'vS',270:'vW'};const a=Math.round(rev(st.vaz)/90)*90%360;if(Math.abs(((rev(st.vaz)-a+540)%360)-180)<12)$(m[a]).classList.add('on');}}
 let ptrType='mouse';
 cv.addEventListener('pointerdown',e=>{ptrType=e.pointerType;cv.setPointerCapture(e.pointerId);$('q').blur();ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;hideHint();
@@ -2025,6 +2080,92 @@ const roUI=new ResizeObserver(measure);roUI.observe(dock);roUI.observe(topEl);
 let toastT=0;
 function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},3800);}
 
+// ---------- location ----------
+// SKYLOC (set before the app runs) is fixed for the life of the page: picking a new
+// place saves it and reloads, so everything is recomputed for the new spot.
+const LOCKEY='sky-loc';
+const fmtDeg=(v,p,n)=>Math.abs(v).toFixed(2)+'° '+(v>=0?p:n);
+const coordTxt=(la,lo)=>fmtDeg(la,'N','S')+', '+fmtDeg(lo,'E','W');
+const kmBetween=(a,b,c,d)=>{const x=sind((c-a)/2),y=sind((d-b)/2);return 12742*Math.asin(Math.sqrt(x*x+cosd(a)*cosd(c)*y*y));};
+const isGPS=SKYLOC.src==='gps';
+$('locName').textContent=isGPS?'Your location':SKYLOC.name;
+$('locCoords').textContent=coordTxt(LAT,LON);
+$('locShort').textContent=isGPS||SKYLOC.name==='Coordinates'?'here':SKYLOC.name.split(',')[0];
+cv.setAttribute('aria-label','Simulated night sky over '+(isGPS?'your location':SKYLOC.name==='Coordinates'?coordTxt(LAT,LON):SKYLOC.name));
+const dlg=$('locDlg');
+function locMsg(t){$('locMsg').textContent=t;}
+function setLoc(l){
+  let saved=false;try{localStorage.setItem(LOCKEY,JSON.stringify(l));saved=true;}catch(e){}
+  if(saved){location.href=location.pathname;return;}
+  location.href=location.pathname+'?'+new URLSearchParams({lat:l.lat,lon:l.lon,tz:l.tz,name:l.name});
+}
+function okTZ(tz){try{new Intl.DateTimeFormat('en-US',{timeZone:tz});return !!tz;}catch(e){return false;}}
+function useGPS(manual){
+  if(!navigator.geolocation){if(manual)locMsg('This browser can’t share its location. Type a place instead.');return;}
+  if(manual)locMsg('Finding you…');
+  navigator.geolocation.getCurrentPosition(p=>{
+    const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);
+    let tz=Intl.DateTimeFormat().resolvedOptions().timeZone;if(!okTZ(tz))tz=SKYLOC.tz;
+    if(!isGPS||tz!==SKYLOC.tz||kmBetween(lat,lon,LAT,LON)>5)setLoc({lat,lon,tz,name:'Your location',src:'gps'});
+    else if(manual){locMsg('');dlg.close();}
+  },e=>{
+    if(manual)locMsg(e.code===1?'Location access is turned off for this site. Allow it in your browser settings, or type a place below.':'Couldn’t get your location. Type a place below instead.');
+  },{enableHighAccuracy:false,timeout:15000,maximumAge:600000});
+}
+// Default to the visitor's own location: ask on a first visit, and follow them if they've moved.
+if(SKYLOC.src==='default'||isGPS)useGPS(false);
+
+function parseCoords(q){
+  const m=q.trim().replace(/[()]/g,'').match(/^([+-]?\d+(?:\.\d+)?)\s*°?\s*([NSns])?\s*[,;\s]\s*([+-]?\d+(?:\.\d+)?)\s*°?\s*([EWew])?$/);
+  if(!m)return null;
+  let la=+m[1],lo=+m[3];
+  if(m[2]&&/s/i.test(m[2]))la=-Math.abs(la);
+  if(m[4]&&/w/i.test(m[4]))lo=-Math.abs(lo);
+  return Math.abs(la)<=90&&Math.abs(lo)<=180?[la,lo]:null;
+}
+async function getJSON(url){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);
+  try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error(r.status);return await r.json();}finally{clearTimeout(t);}
+}
+async function tzAt(la,lo){
+  try{const j=await getJSON('https://api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo+'&timezone=auto&forecast_days=1');if(okTZ(j.timezone))return j.timezone;}catch(e){}
+  const h=Math.round(lo/15);return h===0?'UTC':'Etc/GMT'+(h>0?'-':'+')+Math.abs(h);   // rough fallback: no daylight saving
+}
+const STATES={al:'alabama',ak:'alaska',az:'arizona',ar:'arkansas',ca:'california',co:'colorado',ct:'connecticut',de:'delaware',dc:'district of columbia',fl:'florida',ga:'georgia',hi:'hawaii',id:'idaho',il:'illinois',in:'indiana',ia:'iowa',ks:'kansas',ky:'kentucky',la:'louisiana',me:'maine',md:'maryland',ma:'massachusetts',mi:'michigan',mn:'minnesota',ms:'mississippi',mo:'missouri',mt:'montana',ne:'nebraska',nv:'nevada',nh:'new hampshire',nj:'new jersey',nm:'new mexico',ny:'new york',nc:'north carolina',nd:'north dakota',oh:'ohio',ok:'oklahoma',or:'oregon',pa:'pennsylvania',ri:'rhode island',sc:'south carolina',sd:'south dakota',tn:'tennessee',tx:'texas',ut:'utah',vt:'vermont',va:'virginia',wa:'washington',wv:'west virginia',wi:'wisconsin',wy:'wyoming',pr:'puerto rico'};
+const placeName=r=>[r.name,r.country_code==='US'?r.admin1:[r.admin1,r.country].filter(Boolean).join(', ')].filter(Boolean).join(', ');
+async function findPlace(q){
+  const [city,...rest]=q.split(',').map(x=>x.trim()).filter(Boolean);
+  const want=rest.join(' ').toLowerCase();const wantFull=STATES[want]||want;
+  locMsg('Searching…');$('locRes').innerHTML='';
+  let res=[];
+  try{res=(await getJSON('https://geocoding-api.open-meteo.com/v1/search?count=20&language=en&format=json&name='+encodeURIComponent(city))).results||[];}
+  catch(e){locMsg('Couldn’t reach the place search. Check your connection, or type coordinates like 46.79, -92.10.');return;}
+  res=res.filter(r=>okTZ(r.timezone));
+  if(want){
+    const hit=r=>[r.admin1,r.admin2,r.country].some(v=>v&&v.toLowerCase().startsWith(wantFull))||(r.country_code||'').toLowerCase()===want||(want==='usa'||want==='us')&&r.country_code==='US';
+    const m=res.filter(hit);if(m.length)res=m;
+  }
+  res=res.slice(0,8);
+  if(!res.length){locMsg('No places called “'+city+'”. Try a nearby town, or type coordinates.');return;}
+  if(res.length===1)return pick(res[0]);
+  locMsg('Which one?');
+  const ul=$('locRes');
+  res.forEach(r=>{const li=document.createElement('li'),b=document.createElement('button');b.type='button';
+    b.textContent=placeName(r);const sm=document.createElement('small');sm.textContent=coordTxt(r.latitude,r.longitude)+(r.population?' · pop. '+r.population.toLocaleString('en-US'):'');b.append(sm);
+    b.addEventListener('click',()=>pick(r));li.append(b);ul.append(li);});
+}
+function pick(r){locMsg('Opening the sky over '+placeName(r)+'…');setLoc({lat:+r.latitude.toFixed(4),lon:+r.longitude.toFixed(4),tz:r.timezone,name:placeName(r),src:'search'});}
+$('locBtn').addEventListener('click',()=>{locMsg('');$('locRes').innerHTML='';$('locQ').value='';dlg.showModal();});
+$('locGPS').addEventListener('click',()=>useGPS(true));
+$('locForm').addEventListener('submit',async e=>{
+  e.preventDefault();const q=$('locQ').value.trim();if(!q)return;
+  const c=parseCoords(q);
+  if(c){$('locRes').innerHTML='';locMsg('Looking up the time zone…');const tz=await tzAt(c[0],c[1]);setLoc({lat:c[0],lon:c[1],tz,name:'Coordinates',src:'coords'});return;}
+  if(/^[+-]?\d/.test(q)){locMsg('Those don’t look like coordinates. Use latitude, longitude, like 46.79, -92.10 or 46.79 N, 92.10 W.');return;}
+  findPlace(q);
+});
+dlg.addEventListener('click',e=>{if(e.target!==dlg)return;const r=dlg.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dlg.close();});   // tap outside closes
+
 // prefs
 const PREF='siren-prefs';
 function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({tog:st.tog,ex:st.ex,red:document.body.classList.contains('red')}));}catch(e){}}
@@ -2036,7 +2177,7 @@ $('fRed').addEventListener('click',()=>{const on=document.body.classList.toggle(
 
 // compass + overhead
 $('fCompass').addEventListener('click',()=>{skyOff();const cur=st.dome?150:rev(st.vaz);const next=[0,90,180,270].find(a=>a>cur+10)??0;st.dome=false;st.vaz=next;st.valt=25;st.fov=Math.max(st.fov,70);markViews();need=true;});
-$('fZen').addEventListener('click',()=>{skyOff();if(st.dome){st.dome=false;st.vaz=180;st.valt=30;markViews();need=true;}else setDome(true);});
+$('fZen').addEventListener('click',()=>{skyOff();if(st.dome){st.dome=false;st.vaz=HOMEAZ;st.valt=30;markViews();need=true;}else setDome(true);});
 
 // sky mode: aim the view with the phone's motion sensors
 let sky=null;
